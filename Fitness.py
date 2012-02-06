@@ -30,16 +30,16 @@ class Fitness():
         """
         
         secondary_structure, MFE = RNA.fold(S)
-        if not self.D_scheme:
+        if not self.D_scheme: #Here we compute the usual bp_distance
             D = RNA.bp_distance(self.G, secondary_structure)
-        else:
+        else:   #And here we apply some custom scheme
             D = self.D_scheme(self.G, secondary_structure)
         
         #So we can evaluate the function
         alpha = self.alpha
         beta = self.beta
         try:
-            return eval(self.fit_fct)
+            return eval(self.fit_fct) #We just dumbly evaluate the fit.
         except (SyntaxError, ValueError, ZeroDivisionError) as err:
             print """The fitness function can't be evaluated with the
             actual parameters. The error is:
