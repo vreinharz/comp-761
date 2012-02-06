@@ -8,11 +8,16 @@ class Fitness():
         combination of the MFE and the base pair distance of a given
         MFE secondary structure with G (the goal seconday structure).
         A new fitness function can be given with the key work "fit_fct".
-        It must have at most the 4 parameters, (alpha, beta, MFE, D).
-        If a new scheme for computing D is desired, a function having
-        as input (G,S) where G is the target seconday structure
-        and S the sequence can be passed with the keyword "D_scheme".
-        
+        It must have at most  4 parameters, (alpha, beta, MFE, D).
+        The default scheme for D is the bp_distance of the Vienna 
+        package.      
+        If a new scheme for computing D is desired, a tuple can 
+        be passed (fct_distance, 'mfe_struct'/'S') to the keyword
+        D_scheme. fct_distance is any function with 2 parameters,
+        the first must be G, the second is or the MFE secondary
+        structure of S (mfe_struct) or directly the sequence S. The
+        second element of the tuple is the string "mfe_struct" or
+        "S" indicating which one the function takes as argument.
         """
         self.G = G
         self.alpha = alpha
@@ -32,9 +37,10 @@ class Fitness():
         secondary_structure, MFE = RNA.fold(S)
         if not self.D_scheme: #Here we compute the usual bp_distance
             D = RNA.bp_distance(self.G, secondary_structure)
-        else:   #And here we apply some custom scheme
-            D = self.D_scheme(self.G, secondary_structure)
-        
+        elif self.D_scheme[1] == "mfe_struct":   #And here we apply some custom scheme
+            D = self.D_scheme[0](self.G, secondary_structure)
+        else:
+            D = self.D_scheme[0](self.G, S)
         #So we can evaluate the function
         alpha = self.alpha
         beta = self.beta
@@ -54,6 +60,10 @@ class Fitness():
             return None
 
 if __name__ == "__main__":
+    """This is just some exemples to show
+    how we can do mostly wathever.
+    """
+    
     S = 'GAUCCCGAUCGAUC'
     G = '(((...))..)...'
     
@@ -63,9 +73,11 @@ if __name__ == "__main__":
     my_funky_fitness=Fitness(G,3.4,3,'beta*MFE**(D/alpha)')
     print my_funky_fitness.fitness(S)
     
-    def funky_dis(G, S):
-        return len(S) + len(G)
+    def funky_dis_seq(G, S):
+        return len(S.split('A')) - len(G.split('('))
     
-    even_funkier = Fitness(G, 0.5, 4, "alpha*MFE + beta*D", funky_dis)
+    
+    
+    even_funkier = Fitness(G, 0.5, 4, "alpha*MFE + beta*D", (funky_dis_seq, 'S'))
     print "this is absurd", even_funkier.fitness(S)
     
