@@ -9,8 +9,15 @@ def bp_positions(sec_struct):
     pattern_open = re.compile("\(")
     open_match = [match.start() for match in 
                   pattern_open.finditer(sec_struct)]
-    patter_close = re.compile("\)")
+    pattern_close = re.compile("\)")
     close_match = [match.start() for match in 
                   pattern_close.finditer(sec_struct)]
 
+    positions = []
+    for end in sorted(close_match): #For eatch ending base pair
+        start = max((x for x in open_match if x < end)) 
+        open_match.remove(start) #We remove the matching one
+        positions.append((start,end))
+
+    return positions
 
