@@ -1,3 +1,5 @@
+"""This file contains functions that only call standard libraries
+"""
 def bp_positions(sec_struct):
     """This function takes as input a secondary structure,
     without pseudo-knots, and outputs a list of tuples (a,b)
