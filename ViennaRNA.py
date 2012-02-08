@@ -6,7 +6,7 @@ import Functions
 RNA.cvar.fold_constrained = 1 #To allow use of constraints on folding
 
 def mfe(S, G=None):
-    """Returns the tupe (structure, mfe)  of an RNA sequence S. 
+    """Returns the tuple (structure, mfe)  of an RNA sequence S. 
     A string of constraints can be added as a second argument.
     """
     return RNA.fold(S, G)
@@ -19,12 +19,12 @@ def mfe_bp_distance(S, G):
     Sec_struct = RNA.fold(S)[0]
     return RNA.bp_distance(Sec_struct, G)
 
-def fold_probability(S, G):
-    """Given a sequence S and a secondary structure G, we compute 
+def fold_probability(S, G=None):
+    """Given a sequence S a secondary structure G (default mfe), we compute 
     the partition function of S given G as a constraint. The output
     is a triple (A,B,C) where A is the annotated partition folding,
-    B is a number associate to A, and C a dictionary having as keys 
-    a pair of positions and as value the probability of having a pair.
+    B is the energie of the ensemble A, and C a dictionary having as keys 
+    a pair of positions and as value the probability of having the pair.
     """
     RNA.pf_fold(S, G) #Compute the partition function
     dict_probabilities = {}
