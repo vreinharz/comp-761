@@ -1,23 +1,17 @@
-import re
-
 def bp_positions(sec_struct):
     """This function takes as input a secondary structure,
-    and outputs a list of tuples (a,b) of the interacting
-    nucleotides ( 0 <= a < b < n )
+    without pseudo-knots, and outputs a list of tuples (a,b)
+    of the interacting  nucleotides ( 0 <= a < b < n )
     """
-    #First find position of all opening parenthesis
-    pattern_open = re.compile("\(")
-    open_match = [match.start() for match in 
-                  pattern_open.finditer(sec_struct)]
-    pattern_close = re.compile("\)")
-    close_match = [match.start() for match in 
-                  pattern_close.finditer(sec_struct)]
+    left_bps = [] #Keeps track of the seen '('
+    base_pairs = [] #Keeps track of the completed base pairs
+    for i, position in enumerate(sec_struct):
+        if position == '(':
+            left_bps.append(i)
+        #Every closing must match the last opening
+        elif position == ')':
+            base_pairs.append((left_bps.pop(), i))
+    return base_pairs
 
-    positions = []
-    for end in sorted(close_match): #For eatch ending base pair
-        start = max((x for x in open_match if x < end)) 
-        open_match.remove(start) #We remove the matching one
-        positions.append((start,end))
-
-    return positions
-
+if __name__ == '__main__':
+    print bp_positions('....(((.(....)..))).')
