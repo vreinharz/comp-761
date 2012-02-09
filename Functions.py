@@ -2,6 +2,17 @@
 """
 import random
 
+def do_stats(numbers):
+    """Given a list of numbers, the output is the tuple:
+        (average, standard_deviation, min, max)
+    """
+    avg = float(sum(numbers))/len(numbers)
+    sum_square_diffs = 0
+    for x in numbers:
+        sum_square_diffs += pow(x - avg, 2)
+    sd = pow(sum_square_diffs / len(numbers), 0.5)
+    return (avg, sd, min(numbers), max(numbers))
+
 def bp_positions(sec_struct):
     """This function takes as input a secondary structure,
     without pseudo-knots, and outputs a list of tuples (a,b)
