@@ -1,4 +1,6 @@
-"""This file contain functions who need to call the ViennaRNA API
+"""This file contain functions who need to call the ViennaRNA API. 
+For instructions on how to install it, go at the bottom of:
+       http://biopython.org/wiki/Scriptcentral
 """
 import RNA
 import Functions
