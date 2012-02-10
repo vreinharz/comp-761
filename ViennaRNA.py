@@ -13,9 +13,10 @@ def mfe(S, G=None):
     """
     return RNA.fold(S, G)
 
-def mfe_bp_distance(S, G):
+def mfe_bp_distance(S, G, masked=None):
     """This function takes an RNA sequence S, a secondary structure G,
-    and returns de base pairs distance between the mfe structure of S
+    and returns de base pairs distance between the mfe structure (a mask
+    for the folding can be provided as an optional argument) of S
     and G
     """
     Sec_struct = RNA.fold(S)[0]
@@ -28,12 +29,12 @@ def fold_probability(S, G=None):
     B is the energie of the ensemble A, and C a dictionary having as keys 
     a pair of positions and as value the probability of having the pair.
     """
-    RNA.pf_fold(S, G) #Compute the partition function
+    struct, energy = RNA.pf_fold(S, G) #Compute the partition function
     dict_probabilities = {}
     for left, right in ((x,y) for x in range(len(S)) for y in range(len(S))
                        if x < y):
         dict_probabilities[left,right] =RNA.get_pr(left + 1,right +1)
-    return dict_probabilities
+    return (struct, energy, dict_probabilities)
 
 
 

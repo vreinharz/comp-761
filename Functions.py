@@ -2,6 +2,43 @@
 """
 import random
 
+def find_parent(id, node_names):
+    """Given a list of node names in the format A+B+C where A is the 
+    unique node identifier and B,C its children name, and the id of a 
+    node, the output is the id of the parent.
+    """
+    for name in node_names:
+        if id in name.split('+')[1:]:
+            return name.split('+')[0]
+    return None
+
+def paths_root_leafs(node_names):
+    """Given a list of node names in the format A+B+C where A is the 
+    unique node identifier and B,C its children name, the output
+    is a list of tuples, each one being the list of nodes from the root
+    to a leaf
+    """
+    paths = []
+    leafs = [x[:-2] for x in node_names if x[-2:] == '++']
+    print leafs
+    ids = [x.split('+')[0] for x in node_names]
+    print leafs
+
+    for id in ids:
+        #The root is the only id which is not a children in all nodes
+        if all([not id in x.split('+')[1:] for x in node_names]):
+            root = id
+            break
+
+    for leaf in leafs:
+        paths.append([leaf]) #we add a new path leaf-root
+        actual = leaf
+        while actual is not root:
+            actual = find_parent(actual, node_names)
+            paths[-1].append(actual)
+        paths[-1] = list(reversed(paths[-1]))
+    return paths
+
 def do_stats(numbers):
     """Given a list of numbers, the output is the tuple:
         (average, standard_deviation, min, max)
@@ -28,7 +65,7 @@ def bp_positions(sec_struct):
             base_pairs.append((left_bps.pop(), i))
     return base_pairs
 
-def masoud_probability_vector(masoud_format, 
+def masoud_to_probability_vector(masoud_format, 
                               range_start='(', range_end='Z'):
     """Given the probabilities in the Masoud* format "for an RNA
     sequence, with the encoding starting at the "range_start" char and
@@ -55,6 +92,26 @@ def masoud_probability_vector(masoud_format,
             float(ord(masoud_format[3][pos])-start)/(end-start)
         ))
     return tuple(vector)
+
+def parse_masoud_file(file_path):
+    """Given the path to a file with a list of RNAs in the masoud format,
+    the output is a dictionnary where keys are the name of the RNA
+    and values probability vectors
+    """
+    tree_raw_info = [x.strip() for x in open(file_path)]
+    dict_rnas = {}
+    position = 0
+    while position < len(tree_raw_info):
+        if tree_raw_info[position][0] == '>':#Annouce a name.
+            name = tree_raw_info[position][1:]#We don't want to keep '>'
+            #The four next positions are the probabilities 
+            masoud_vector = [tree_raw_info[position + x] 
+                             for x in range(1,5)]
+            dict_rnas[name] = masoud_to_probability_vector(masoud_vector)
+            position += 5
+        else:
+            position += 1
+    return dict_rnas
 
 def weighted_selection(elements, weights=None):
     """Takes as input two list. The first is the elements and in the same
