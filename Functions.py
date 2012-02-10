@@ -150,7 +150,7 @@ def rand_rna_population(probabilities, size=1000):
 if __name__ == '__main__':
     print bp_positions('....(((.(....)..))).')
 
-    print rand_rna_population(masoud_probability_vector([
+    rand_rna_population(masoud_to_probability_vector([
         '(64<:((ZZZASD',
         'Z34>((((((WQE',
         '(PO}E(((((WEW',

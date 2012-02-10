@@ -2,6 +2,7 @@ import os
 import sys
 import Functions as Fct
 import ViennaRNA as VRNA
+import LaTeX
 from matplotlib import pyplot as plt
 
 """The general strategy here will be to recreate the phylogenetic tree
@@ -40,34 +41,34 @@ def do_benchmarks(rna_list, concensus):
 
         #The first test is the mfe
         mfe = [VRNA.mfe(sequence)[1] for sequence in pop]
-        benchmark[rna]['mfe'] = Fct.do_stats(mfe)
+        benchmark[rna]['mfe'] = (mfe)
 
         #Masked mfe
         mfe_masked = [VRNA.mfe(sequence, concensus)[1] 
                     for sequence in pop]
-        benchmark[rna]['mfe_masked'] = Fct.do_stats(mfe_masked)
+        benchmark[rna]['mfe_masked'] = (mfe_masked)
 
         #MFE bp_distance
         mfe_bp_distance = [VRNA.mfe_bp_distance(sequence, concensus) 
                        for sequence in pop]
-        benchmark[rna]['mfe_bp_distance'] = Fct.do_stats(mfe_bp_distance)
+        benchmark[rna]['mfe_bp_distance'] = (mfe_bp_distance)
 
         #folding masked bp_distance
         masked_bp_distance = [VRNA.mfe_bp_distance(sequence, concensus,
                                                   concensus) 
                        for sequence in pop]
-        benchmark[rna]['masked_bp_distance'] = Fct.do_stats(
+        benchmark[rna]['masked_bp_distance'] = (
             masked_bp_distance)
 
         #MFE Energy ensemble
         mfe_energy = [VRNA.fold_probability(sequence)[1]
                       for sequence in pop]
-        benchmark[rna]['mfe_energy'] = Fct.do_stats(mfe_energy)
+        benchmark[rna]['mfe_energy'] = (mfe_energy)
 
         #MFE Energy ensemble
         masked_energy = [VRNA.fold_probability(sequence)[1]
                          for sequence in pop]
-        benchmark[rna]['masked_energy'] = Fct.do_stats(masked_energy)
+        benchmark[rna]['masked_energy'] = (masked_energy)
     return benchmark
 
 def get_node_stats(node_id, benchmarks, metric):
@@ -80,31 +81,17 @@ def get_node_stats(node_id, benchmarks, metric):
             return benchmarks[node][metric]
     return None
     
-
 def plot_benchmarks(benchmarks, paths, metric):
     for path in paths:
-        stats = []
-        for node_id in path:
-            stats.append(get_node_stats(node_id, benchmarks, metric))
-        avgs = [x[0] for x in stats]
-        sds = [x[1] for x in stats]
-        mins = [x[2] for x in stats]
-        maxs = [x[3] for x in stats]
-        #We plot the sd up
-        plt.plot([x for x in range(len(path))], 
-                 [avgs[x] + sds[x] for x in range(len(path))])
-        #The sd down
-        plt.plot([x for x in range(len(path))], 
-                  [avgs[x] - sds[x] for x in range(len(path))])
-        #Maxes
-        plt.plot([x for x in range(len(path))], maxs)
-        #Mins
-        plt.plot([x for x in range(len(path))], mins)
-        #Average line
-        plt.plot([x for x in range(len(path))], avgs)
-    plt.showlabel()
-    plt.savefig(metric)
-
+        data = []
+        for i, node_id in enumerate(path):
+            data.append(get_node_stats(node_id, benchmarks, metric))
+        plt.boxplot(data)    
+        plt.xlabel('->'.join(path), fontsize='22')
+        plt.ylabel(metric, fontsize='22')
+        plt.rc('font', size=17)
+        plt.savefig('%s_%s' % ('_'.join(path), metric))
+        
 
 if __name__ == '__main__':
     path_file_rnas = 'sample.txt'
@@ -116,8 +103,26 @@ if __name__ == '__main__':
     #Now that we have all the info, we want to create a list of
     node_names = benchmarks.keys()
     paths = Fct.paths_root_leafs(node_names)
+
+    #Since we are lazy, lets do a latex file
+    list_tex = [LaTeX.standard_header()]
     for metric in metrics_list:
         plot_benchmarks(benchmarks, paths, metric)
+        #We add a section for this metric, and we will
+        #do 3x2 figures per page.
+        list_tex.append("\\newpage\\section{%s}" % 
+                        metric.replace('_', '\\_'))
+        #Now we want a list of the names of the figures of the metric
+        metric_figs_names = [x for x in os.listdir('.') if 
+                             x.endswith('%s.png' % metric)]
+        list_tex.append(LaTeX.figure_env(metric_figs_names))
+    list_tex.append('\\end{document}')
+    with open('main.tex', 'w') as latex_file:
+        latex_file.write("\n".join(list_tex))
+
+
+
+
 
     """
     for rna in benchmark:
@@ -127,8 +132,3 @@ if __name__ == '__main__':
                 print '\t\tmean\tsd\tmin\tmax'
                 print '\t\t%.2f\t%.2f\t%.2f\t%.2f' % benchmarks[rna][metric]
     """
-
-
-
-         
-
