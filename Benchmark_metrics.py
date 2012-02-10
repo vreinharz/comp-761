@@ -119,16 +119,6 @@ if __name__ == '__main__':
     list_tex.append('\\end{document}')
     with open('main.tex', 'w') as latex_file:
         latex_file.write("\n".join(list_tex))
+    os.system('pdflatex main.tex && pdflatex main.tex')
+    os.system('rm *.png')
 
-
-
-
-
-    """
-    for rna in benchmark:
-            print rna
-            for metric in benchmark[rna]:
-                print '\t%s:' % metric
-                print '\t\tmean\tsd\tmin\tmax'
-                print '\t\t%.2f\t%.2f\t%.2f\t%.2f' % benchmarks[rna][metric]
-    """

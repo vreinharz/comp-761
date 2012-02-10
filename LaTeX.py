@@ -1,3 +1,5 @@
+"""This file contains functions helping create LaTeX files
+"""
 def standard_header(font_size=12, doc_class='article',
                           author='evolution', title='Work'):
     """This output a normal header up "\\begin{document} \\maketitle"
