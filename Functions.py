@@ -20,9 +20,7 @@ def paths_root_leafs(node_names):
     """
     paths = []
     leafs = [x[:-2] for x in node_names if x[-2:] == '++']
-    print leafs
     ids = [x.split('+')[0] for x in node_names]
-    print leafs
 
     for id in ids:
         #The root is the only id which is not a children in all nodes

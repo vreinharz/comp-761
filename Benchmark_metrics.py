@@ -2,6 +2,7 @@ import os
 import sys
 import Functions as Fct
 import ViennaRNA as VRNA
+from matplotlib import pyplot as plt
 
 """The general strategy here will be to recreate the phylogenetic tree
 where each node will contains the profile (as a valid input to
@@ -69,6 +70,40 @@ def do_benchmarks(rna_list, concensus):
         benchmark[rna]['masked_energy'] = Fct.do_stats(masked_energy)
     return benchmark
 
+def get_node_stats(node_id, benchmarks, metric):
+    """Given a node_id, benchmarks and metric,
+    return the stats of the node for the given metric
+    as the tuple (avg, sd, min, max)
+    """
+    for node in benchmarks.keys():
+        if node.split('+')[0] == node_id:
+            return benchmarks[node][metric]
+    return None
+    
+
+def plot_benchmarks(benchmarks, paths, metric):
+    for path in paths:
+        stats = []
+        for node_id in path:
+            stats.append(get_node_stats(node_id, benchmarks, metric))
+        avgs = [x[0] for x in stats]
+        sds = [x[1] for x in stats]
+        mins = [x[2] for x in stats]
+        maxs = [x[3] for x in stats]
+        #We plot the sd up
+        plt.plot([x for x in range(len(path))], 
+                 [avgs[x] + sds[x] for x in range(len(path))])
+        #The sd down
+        plt.plot([x for x in range(len(path))], 
+                  [avgs[x] - sds[x] for x in range(len(path))])
+        #Maxes
+        plt.plot([x for x in range(len(path))], maxs)
+        #Mins
+        plt.plot([x for x in range(len(path))], mins)
+        #Average line
+        plt.plot([x for x in range(len(path))], avgs)
+    plt.showlabel()
+    plt.savefig(metric)
 
 
 if __name__ == '__main__':
@@ -76,14 +111,13 @@ if __name__ == '__main__':
     concensus = '(...........)'
     rna_list = Fct.parse_masoud_file(path_file_rnas)
 
-    benchmark = do_benchmarks(rna_list, concensus)
+    benchmarks = do_benchmarks(rna_list, concensus)
     
     #Now that we have all the info, we want to create a list of
-    node_names = benchmark.keys()
+    node_names = benchmarks.keys()
     paths = Fct.paths_root_leafs(node_names)
-    print paths
-    print
-    print
+    for metric in metrics_list:
+        plot_benchmarks(benchmarks, paths, metric)
 
     """
     for rna in benchmark:
@@ -91,7 +125,7 @@ if __name__ == '__main__':
             for metric in benchmark[rna]:
                 print '\t%s:' % metric
                 print '\t\tmean\tsd\tmin\tmax'
-                print '\t\t%.2f\t%.2f\t%.2f\t%.2f' % benchmark[rna][metric]
+                print '\t\t%.2f\t%.2f\t%.2f\t%.2f' % benchmarks[rna][metric]
     """
 
 
