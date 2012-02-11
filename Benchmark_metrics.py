@@ -120,5 +120,5 @@ if __name__ == '__main__':
     with open('main.tex', 'w') as latex_file:
         latex_file.write("\n".join(list_tex))
     os.system('pdflatex main.tex && pdflatex main.tex')
-    os.system('rm *.png')
+    os.system('rm *.png main.*')
 
