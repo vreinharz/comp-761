@@ -98,8 +98,8 @@ def plot_benchmarks(benchmarks, paths, metric):
         for i, node_id in enumerate(path):
             data.append(get_node_stats(node_id, benchmarks, metric))
         plt.boxplot(data)    
-        plt.xlabel('$Evolution goes this ways \\Rightarrow')
-        plt.ylabel('$\s$' % metric, fontsize='22')
+        plt.xlabel('$Evolution goes this ways \\Rightarrow$')
+        plt.ylabel('$%s$' % metric, fontsize='22')
         plt.rc('font', size=17)
         plt.savefig('%s_%s' % ('_'.join(path), metric))
         
