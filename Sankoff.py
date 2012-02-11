@@ -1,76 +1,49 @@
 import sys
 import Functions 
 
-class rna_leaf():
-    def __init__(self,number,name,sequence):
-        self.number = number
-        self.name = name
-        self.sequence = sequence
-
-def Sankoff(rna1, rna2, weights=None):
-    """We output a [4-tuples] with the values of 'A,C,G,U'
-       given 2 instances of rna_leaf, 1 rna_leaf and 1 [4-tuples]
-       or 2 [4-tuples].
+def Sankoff(rnas, weights=None):
+    """Given a list of rnas sequence or profiles (must be a 4-tuple
+    in the order "A, C, G, U") will output the 'Sankoff' (tuple of
+    4-tuples of sankoffs values in the order "A,C,G,U"). An
+    optional weight dict can be added, there is a default one just below.
     """
-
-    def Sankoff_1_rna_leaf(rna1, rna2, weights):
-        if isinstance(rna1, rna_leaf):
-            seq = rna1.sequence
-            profile = rna2
+    if not weights and any([isinstance(rna, str) for rna in rnas]):
+        weights = {'A':{'A':0, 'C':5, 'G':2, 'U':5},
+                   'C':{'A':5, 'C':0, 'G':5, 'U':2},
+                   'G':{'A':2, 'C':5, 'G':0, 'U':5},
+                   'U':{'A':5, 'C':2, 'G':5, 'U':0}}
+    #We search for the leaves and sequences
+    leaves = []
+    internal = []
+    for rna in rnas:
+        if isinstance(rna, str):
+            leaves.append(rna)
         else:
-            seq = rna2.sequence
-            profile = rna1
-        sank = []
-        nuc = ['A', 'C', 'G', 'U']
-        for i in range(len(seq)):
-            this_nuc_vals = []
-            for j, x in enumerate(nuc):
-                this_nuc_vals.append(weights[x][seq[i]] + profile[i][j])
-            sank.append(tuple(this_nuc_vals))
-        return tuple(sank)
-
-    def Sankoff_2_rna_leafs(rna1, rna2, weights):
-        seq1 = rna1.sequence
-        seq2 = rna2.sequence
-        sank = []
-        nuc = ['A', 'C', 'G', 'U']
-        for i in range(len(seq1)):
-            this_nuc_vals = []
-            for x in nuc:
-                this_nuc_vals.append(weights[x][seq1[i]] + 
-                                     weights[x][seq2[i]])
-            sank.append(tuple(this_nuc_vals))
-        return tuple(sank)
-
-    if isinstance(rna1, rna_leaf) or isinstance(rna2, rna_leaf):
-        if not weights:
-            weights = {'A':{'A':0, 'C':5, 'G':2, 'U':5},
-                       'C':{'A':5, 'C':0, 'G':5, 'U':2},
-                       'G':{'A':2, 'C':5, 'G':0, 'U':5},
-                       'U':{'A':5, 'C':2, 'G':5, 'U':0}}
-        if isinstance(rna1, rna_leaf) and isinstance(rna2, rna_leaf):
-            return Sankoff_2_rna_leafs(rna1, rna2, weights)
-        else:
-            return Sankoff_1_rna_leaf(rna1, rna2, weights)
-    else:
-        sank = []
-        for i in range(len(rna1)):
-            sank.append(tuple([rna1[i][j] + rna2[i][j] for j in range(4)]))
-        return tuple(sank)
-
-class node():
-    def __init__(self, children=None, data=None):
-        #children is a list of nodes
-        if children:
-            self.children = children[:]
-        else:
-            self.children = []
-        self.data = data
+            internal.append(rna)
+    #They should all have the same length so it doesn't matter
+    nucleotides = ['A', 'C', 'G', 'U']
+    sank = []
+    for i in range(len(rnas[0])):
+        this_position = [0,0,0,0] #we start with 0 for every nucleotide
+        for rna in leaves:
+            for j, nuc in enumerate(nucleotides):
+                this_position[j] += weights[rna[i]][nuc]
+        for rna in internal:
+            for j in range(4):
+                this_position[j] += rna[i][j]
+        sank.append(tuple(this_position))
+    return tuple(sank)
 
 def Newick_parser(tree):
+    """Given a string of a tree in the Newick format,where
+    leafs are the only elements to have names!.
+    Will output the tree in the following format:
+        every internal node is a list of its children, every leaf
+        is a string of its name.
+    """
     positions = Functions.bp_positions(tree)
     if not positions:
-        return tuple(tree.replace('+', '_').split('|'))#+ is our node sep.
+        return tree.replace('+', '_').split('|')[-1]
     positions.remove((0, len(tree)-1))
     commas = [i for i, x in enumerate(tree) if x == ',']
     separators = []
@@ -84,8 +57,49 @@ def Newick_parser(tree):
         newick_vals.append(tree[separators[i]+1:separators[i+1]])
     return newick_vals
 
+def make_sankoff_profile(tree):
+    """Given a rna tree as outputed by Newick_parser,
+    will create the sankoff profile.
+    Every node in the profile is or an rna string(leaf) 
+    a 3-tuple where the 0st element is 
+    the name, the second the 'sankoff value' of the node
+    (in order 'A, C, G, U'), and the last element is
+    a tuple of children.
+    """
+    tree = tree[:] #copy so we don't overwrite
+    if isinstance(tree, str) or isinstance(tree, tuple):
+        return tree
+    #If we are not at the leaf, or computed value, pick the childs
+    children = []
+    sank = []
+    name = []
+    for child in tree:
+        if isinstance(child, str):
+            name.append(child)
+            sank.append(child)
+            children.append(child)
+        elif isinstance(child, tuple):
+            name.append(child[0])
+            sank.append(child[1])
+            children.append(child)
+        else:
+            child = make_sankoff_profile(child)
+            name.append(child[0])
+            sank.append(child[1])
+            children.append(child)
+    tree = ('_'.join(name), Sankoff(sank), tuple(children))
+    return tree
+
+def write_tree_profile(tree, file_path):
+
+
+
+
 
 if __name__ == '__main__':
     tree_seq = [x.strip() for x in open('sample.tree')][0][1:-1]
-    print Functions.bp_positions(tree_seq)
-    print Newick_parser(tree_seq)
+    #print Sankoff(['AUGC', 'CGAC'])
+    #print Functions.bp_positions(tree_seq)
+    a = Newick_parser('((AUGC,AUGC),CGAA)')
+    b = make_sankoff_profile(a)
+    print b
