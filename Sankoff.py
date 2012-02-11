@@ -1,4 +1,3 @@
-import sys
 import Functions 
 
 def Sankoff(rnas, weights=None):
@@ -90,8 +89,59 @@ def make_sankoff_profile(tree):
     tree = ('_'.join(name), Sankoff(sank), tuple(children))
     return tree
 
-def write_tree_profile(tree, file_path):
+def make_rna_profile(profile, start_char='(', end_char='Z'):
+    """Given an rna sequence or profile, will output a 4-tuple
+    of strings where each one is the probability of a given nucleotide
+    to be at a given place in the order 'A, C, G, U'"""
+    probs = {x:[] for x in ('A', 'C', 'G', 'U')}
+    if isinstance(profile, str):
+        for nuc in profile:
+            for x in probs:
+                if x == nuc:
+                    probs[x].append(end_char)
+                else:
+                    probs[x].append(start_char)
+        return '\n'.join((''.join(probs['A']),
+                         ''.join(probs['C']),
+                         ''.join(probs['G']),
+                         ''.join(probs['U'])))
+    else:#We have a sankoff profile
+        nucleotides = ('A', 'C', 'G', 'U')
+        for nuc in profile:
+            #First check if one is 0
+            if 0 in nuc:
+                for i, x in enumerate(nuc):
+                    if x == 0:
+                        probs[nucleotides[i]].append(end_char)
+                    else:
+                        probs[nucleotides[i]].append(start_char)
+            else: #We just compute as partition the sum of inverses
+                inverse_sum = sum((1.0/x for x in nuc)) 
+                for i, x in enumerate(nuc):
+                        span = (1.0/x)/inverse_sum
+                        char_range = ord(end_char) - ord(start_char)
+                        probs[nucleotides[i]].append(chr(int(
+                            span*char_range + ord(start_char))))
+        return '\n'.join((''.join(probs['A']),
+                         ''.join(probs['C']),
+                         ''.join(probs['G']),
+                         ''.join(probs['U'])))
 
+def write_tree_profile(tree, file_obj):
+    """Given a file_obj open to append text, will write
+    in it the profile of a "sankoff profile"
+    """
+    if isinstance(tree, str):
+        file_obj.write('>%s\n' % tree)
+        file_obj.write(make_rna_profile(tree) + '\n')
+    else:
+        name = [tree[0]]
+        for child in tree[2]:
+            name.append(child[0])
+            write_tree_profile(child, file_obj)
+        file_obj.write('>' + '+'.join(name) + '\n')
+        file_obj.write(make_rna_profile(tree[1]))
+    return None
 
 
 
@@ -100,6 +150,7 @@ if __name__ == '__main__':
     tree_seq = [x.strip() for x in open('sample.tree')][0][1:-1]
     #print Sankoff(['AUGC', 'CGAC'])
     #print Functions.bp_positions(tree_seq)
-    a = Newick_parser('((AUGC,AUGC),CGAA)')
+    a = Newick_parser(tree_seq)
     b = make_sankoff_profile(a)
-    print b
+    with open('sank.txt', 'w') as sank:
+        write_tree_profile(b, sank)

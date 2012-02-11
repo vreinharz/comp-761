@@ -127,6 +127,11 @@ def weighted_selection(elements, weights=None):
     in the same order. The output is a random element
     """
     if weights:
+        #must make sure one of them is not float("inf"), else return it
+        for i, w in enumerate(weights):
+            if w == float("inf"):
+                return elements[i]
+        #else we pick random number,etc..
         r = random.uniform(0,sum(weights))
         sub_total = 0
         for i, w in enumerate(weights):
