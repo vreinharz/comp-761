@@ -1,5 +1,7 @@
 """This file contains functions helping create LaTeX files
 """
+import os
+
 def standard_header(font_size=12, doc_class='article',
                           author='evolution', title='Work'):
     """This output a normal header up "\\begin{document} \\maketitle"
@@ -34,3 +36,25 @@ def figure_env(subfigures_list, width=0.47):
     environment.append('\end{figure}')
     return '\n'.join(environment)
 
+def make_table(table, **kwargs):
+    """auto_generates a table
+    """
+
+def pdf_build(file_name, bib=None, keep_log=None):
+    """Build the pdf and remove built files. If bib is not None,
+    it will run the bibtex. If keep log is not None, it will leave
+    the logs in the file "%s_log.tex" % file_name.
+    """
+    tmp = ['.aux', '.log', '.tex']
+    os.system('pdflatex %s.tex >> %s_log.txt' % (file_name,file_name))
+    os.system('pdflatex %s.tex >> %s_log.txt' % (file_name,file_name))
+    if bib:
+        os.system('bibtex %s.bib' % bib)
+    for x in tmp:
+        os.system('rm %s%s' % (file_name, x))
+    if not keep_log:
+        os.system('rm %s_log.txt' % file_name)
+    return None
+
+
+    
