@@ -1,5 +1,6 @@
 import os
 import sys
+import time
 import Functions as Fct
 import ViennaRNA as VRNA
 import LaTeX
@@ -33,42 +34,46 @@ def do_benchmarks(rna_list, concensus):
     names, values a dict{"metric_name", Functions.do_stats}
     """
     benchmark = {} #We will keep track of the benchmark in this dict
+    pop_time = 0
     for rna in rna_list: 
         benchmark[rna] = {}
         #Now we want to generate a population, and do all the benchmarks
         #on them.
+        pop_s = time.time()
         pop = Fct.rand_rna_population(rna_list[rna])
+        pop_time += time.time() - pop_s
 
         #The first test is the mfe
         mfe = [VRNA.mfe(sequence)[1] for sequence in pop]
-        benchmark[rna]['mfe'] = (mfe)
+        benchmark[rna]['mfe'] = mfe
 
         #Masked mfe
         mfe_masked = [VRNA.mfe(sequence, concensus)[1] 
                     for sequence in pop]
-        benchmark[rna]['mfe_masked'] = (mfe_masked)
+        benchmark[rna]['mfe_masked'] = mfe_masked
 
         #MFE bp_distance
         mfe_bp_distance = [VRNA.mfe_bp_distance(sequence, concensus) 
                        for sequence in pop]
-        benchmark[rna]['mfe_bp_distance'] = (mfe_bp_distance)
+        benchmark[rna]['mfe_bp_distance'] = mfe_bp_distance
 
         #folding masked bp_distance
         masked_bp_distance = [VRNA.mfe_bp_distance(sequence, concensus,
                                                   concensus) 
                        for sequence in pop]
-        benchmark[rna]['masked_bp_distance'] = (
-            masked_bp_distance)
+        benchmark[rna]['masked_bp_distance'] = masked_bp_distance
 
         #MFE Energy ensemble
         mfe_energy = [VRNA.fold_probability(sequence)[1]
                       for sequence in pop]
-        benchmark[rna]['mfe_energy'] = (mfe_energy)
+        benchmark[rna]['mfe_energy'] = mfe_energy
 
         #MFE Energy ensemble
         masked_energy = [VRNA.fold_probability(sequence)[1]
                          for sequence in pop]
-        benchmark[rna]['masked_energy'] = (masked_energy)
+        benchmark[rna]['masked_energy'] = masked_energy
+
+    print 'time to generate all population: ', pop_time, ' seconds'
     return benchmark
 
 def get_node_stats(node_id, benchmarks, metric):
@@ -106,8 +111,11 @@ if __name__ == '__main__':
 
     #Since we are lazy, lets do a latex file
     list_tex = [LaTeX.standard_header()]
+    plot_time = 0
     for metric in metrics_list:
+        plot_s = time.time()
         plot_benchmarks(benchmarks, paths, metric)
+        plot_time += time.time() - plot_s
         #We add a section for this metric, and we will
         #do 3x2 figures per page.
         list_tex.append("\\newpage\\section{%s}" % 
@@ -116,9 +124,11 @@ if __name__ == '__main__':
         metric_figs_names = [x for x in os.listdir('.') if 
                              x.endswith('%s.png' % metric)]
         list_tex.append(LaTeX.figure_env(metric_figs_names))
+    print 'the time to do the plots is: ', plot_time, ' seconds'
     list_tex.append('\\end{document}')
     with open('main.tex', 'w') as latex_file:
         latex_file.write("\n".join(list_tex))
-    os.system('pdflatex main.tex && pdflatex main.tex')
-    os.system('rm *.png main.*')
+    print 'building TeX file'
+    LaTeX.pdf_build('main')
+    os.system('rm *.png')
 
