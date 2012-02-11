@@ -63,9 +63,19 @@ def bp_positions(sec_struct):
             base_pairs.append((left_bps.pop(), i))
     return base_pairs
 
+def find_complement_bp(position, bps):
+    """Given an integer "position" and a list of base pairs positions"bps"
+    as outputed by "bp_positions", if position is involved in a base pair,
+    the pair will be returned, else None.
+    """
+    for left, right in bps:
+        if position in (left, right):
+            return (left, right)
+    return None
+
 def masoud_to_probability_vector(masoud_format, 
                               range_start='(', range_end='Z'):
-    """Given the probabilities in the Masoud* format "for an RNA
+    """Given the probs in the Masoud* format "for an RNA
     sequence, with the encoding starting at the "range_start" char and
     ending at the "range_end" char, we output a tuple of 4-tuple as:
     ( (P_A_1, P_C_1, P_G_1, P_U_1), ..., (P_A_n, P_C_n, P_G_n, P_U_n))
@@ -102,7 +112,7 @@ def parse_masoud_file(file_path):
     while position < len(tree_raw_info):
         if tree_raw_info[position][0] == '>':#Annouce a name.
             name = tree_raw_info[position][1:]#We don't want to keep '>'
-            #The four next positions are the probabilities 
+            #The four next positions are the probs 
             masoud_vector = [tree_raw_info[position + x] 
                              for x in range(1,5)]
             dict_rnas[name] = masoud_to_probability_vector(masoud_vector)
@@ -127,31 +137,89 @@ def weighted_selection(elements, weights=None):
     else:
         return random.choice(elements)
 
-def rand_rna(nuc_probabilities):
-    """Generates a random RNA sequence given probabilities
-    at each positions contained in "nuc_probabilities. It should be
+def rand_rna_bp_complement(nuc):
+    """Given an rna nucleotide, will output a random nucleotide which
+    can form a base pair with the inputed one.
+    """
+    if nuc == 'A':
+        return 'U'
+    elif nuc == 'C':
+        return 'G'
+    elif nuc == 'G':
+        return random.choice(('U', 'C'))
+    elif nuc == 'U':
+        return random.choice(('A', 'G'))
+    return None
+
+def rand_rna(nuc_probs):
+    """Generates a random RNA sequence given probs
+    at each positions contained in "nuc_probs. It should be
     an iterable where each element in a 4-tuples (P_A, P_C_, P_G, P_U)
     """
     nucleotides = ['A', 'C', 'G', 'U']
     rna = []
-    for position in nuc_probabilities:
+    for position in nuc_probs:
         rna.append(weighted_selection(nucleotides, position))
     return ''.join(rna)
 
-def rand_rna_population(probabilities, size=1000):
+def rand_rna_population(probs, size=1000):
     """Generates "size" random RNAs given the probability
-    vector "probabilities" who must be an iterator, the size
+    vector "probs" who must be an iterator, the size
     of the desired RNA, where each position is a 4-tuple
-    with the probabilities of the nucleotides: (P_A, P_C, P_G, P_U)
+    with the probs of the nucleotides: (P_A, P_C, P_G, P_U)
     """
-    return [rand_rna(probabilities) for x in range(size)]
+    return [rand_rna(probs) for x in range(size)]
 
+def mutate_rna(rna, mask=None, nuc_probs=None,
+                               mutate_into_probs=None):
+    """Given an rna sequence will output a mutated sequence. By default
+    the probability of any nucleotide to mutate is 1/len(rna). The keyword
+    argument "nuc_probs" can be given a dictionary the
+    nucleotides and values the probability of each one mutating.
+    The keyword "mask" can be given a secondary structure, and
+    will make sure to make random compensatory mutations.
+    Finally the keyword argument "mutate_into_probs" can be given
+    as value a dictionnary with keys the nucleotides and value a list
+    of weight for the probability of mutating into each one of the others.
+    The order for the probabilities MUST be : [P_A, P_C, P_G, P_U] where
+    P_X is the probability of mutating into nucleotide X. By default, 
+    a nucleotide has a probability of 1/3 of mutating into any other.
+    """
+    rna = list(rna)#We work on a list, easier to mutate :).
+    pool = ['A', 'C', 'G', 'U'] #Our nucleotides
+    #If we don't have a mutation into probs, we give 1/3 to each
+    if not mutate_into_probs:
+        mutate_into_probs = {'A':[0,     1.0/3, 1.0/3, 1.0/3],
+                             'C':[1.0/3, 0,     1.0/3, 1.0/3],
+                             'G':[1.0/3, 1.0/3, 0,     1.0/3],
+                             'U':[1.0/3, 1.0/3, 1.0/3, 0    ]}
+    #if there is no mutation rate "nuc_probs", we give 1/100 to each one
+    if not nuc_probs:
+        nuc_probs = {x:1.0/len(rna) for x in ['A', 'U', 'C', 'G']}
+    #If we have a mask, we prepare the list of base pairs
+    if not mask:
+        for i, nuc in enumerate(rna):
+            if random.random() < nuc_probs[nuc]:
+                rna[i] = weighted_selection(pool,mutate_into_probs[nuc])
+    else:
+        mask_bp = bp_positions(mask)
+        for i, nuc in enumerate(rna):
+            if random.random() < nuc_probs[nuc]:
+                rna[i] = weighted_selection(pool,mutate_into_probs[nuc])
+                #We check if there is a complement, if there is a mask
+                cplt = find_complement_bp(i, mask_bp)
+                if cplt and cplt[0] != i:
+                    rna[cplt[0]] = rand_rna_bp_complement(nuc)
+                elif cplt and cplt[1] != i:
+                    rna[cplt[1]] = rand_rna_bp_complement(nuc)
+    return ''.join(rna)
 
 if __name__ == '__main__':
-    print bp_positions('....(((.(....)..))).')
 
-    rand_rna_population(masoud_to_probability_vector([
+    a=  rand_rna_population(masoud_to_probability_vector([
         '(64<:((ZZZASD',
         'Z34>((((((WQE',
         '(PO}E(((((WEW',
-        '(S:>}ZZ((((((']))
+        '(S:>}ZZ((((((']))[0]
+    print a
+    print mutate_rna(a)
