@@ -34,3 +34,7 @@ def figure_env(subfigures_list, width=0.47):
     environment.append('\end{figure}')
     return '\n'.join(environment)
 
+
+def make_table(table, **kwargs):
+    """auto_generates a table
+    """
