@@ -1,4 +1,6 @@
 import Functions 
+import sys
+leaves_counter = 0
 
 def Sankoff(rnas, weights=None):
     """Given a list of rnas sequence or profiles (must be a 4-tuple
@@ -40,20 +42,23 @@ def Newick_parser(tree):
         every internal node is a list of its children, every leaf
         is a string of its name.
     """
-    positions = Functions.bp_positions(tree)
-    if not positions:
+    if tree[0] != '(':
+        global leaves_counter
+        leaves_counter +=1
         return tree.replace('+', '_').split('|')[-1]
-    positions.remove((0, len(tree)-1))
+    tree = tree[1:-1]
+    positions = Functions.bp_positions(tree)
     commas = [i for i, x in enumerate(tree) if x == ',']
     separators = []
     #We check for all separators of our current node
     for i in commas:
         if all([ (i < x[0] or x[1] < i) for x in positions]):
             separators.append(i)
-    newick_vals = [Newick_parser(tree[1:separators[0]]),
-                   Newick_parser(tree[separators[-1]+1:-1])]
-    for i in range(1, len(separators)-1):
-        newick_vals.append(tree[separators[i]+1:separators[i+1]])
+    newick_vals = [Newick_parser(tree[:separators[0]]),
+               Newick_parser(tree[separators[-1]+1:])]
+    for i in range(len(separators)-1):
+        newick_vals.append(Newick_parser(
+            tree[separators[i]+1:separators[i+1]]))
     return newick_vals
 
 def make_sankoff_profile(tree):
@@ -137,10 +142,13 @@ def write_tree_profile(tree, file_obj):
     else:
         name = [tree[0]]
         for child in tree[2]:
-            name.append(child[0])
+            if isinstance(child, str):
+                name.append(child)
+            else:
+                name.append(child[0])
             write_tree_profile(child, file_obj)
         file_obj.write('>' + '+'.join(name) + '\n')
-        file_obj.write(make_rna_profile(tree[1]))
+        file_obj.write(make_rna_profile(tree[1]) + '\n')
     return None
 
 
@@ -148,8 +156,8 @@ def write_tree_profile(tree, file_obj):
 
 if __name__ == '__main__':
     tree_seq = [x.strip() for x in open('sample.tree')][0][1:-1]
-    #print Sankoff(['AUGC', 'CGAC'])
     #print Functions.bp_positions(tree_seq)
+    
     a = Newick_parser(tree_seq)
     b = make_sankoff_profile(a)
     with open('sank.txt', 'w') as sank:

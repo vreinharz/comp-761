@@ -35,7 +35,9 @@ def do_benchmarks(rna_list, concensus):
     """
     benchmark = {} #We will keep track of the benchmark in this dict
     pop_time = 0
-    for rna in rna_list: 
+    bench_time = 0
+    for counter_rna, rna in enumerate(rna_list): 
+        print 'prossing rna nb: ', counter_rna + 1
         benchmark[rna] = {}
         #Now we want to generate a population, and do all the benchmarks
         #on them.
@@ -44,6 +46,7 @@ def do_benchmarks(rna_list, concensus):
         pop_time += time.time() - pop_s
 
         #The first test is the mfe
+        bench_s = time.time()
         mfe = [VRNA.mfe(sequence)[1] for sequence in pop]
         benchmark[rna]['mfe'] = mfe
 
@@ -72,8 +75,11 @@ def do_benchmarks(rna_list, concensus):
         masked_energy = [VRNA.fold_probability(sequence)[1]
                          for sequence in pop]
         benchmark[rna]['masked_energy'] = masked_energy
+        bench_time += time.time() - bench_s
+        print '\tthis rna took:', time.time() - bench_s, 'seconds'
 
     print 'time to generate all population: ', pop_time, ' seconds'
+    print 'time to execute all benchmarks: ', bench_time, ' seconds'
     return benchmark
 
 def get_node_stats(node_id, benchmarks, metric):
@@ -99,8 +105,9 @@ def plot_benchmarks(benchmarks, paths, metric):
         
 
 if __name__ == '__main__':
-    path_file_rnas = 'sample.txt'
-    concensus = '(...........)'
+    path_file_rnas = 'sank.txt'
+    concensus = '.....<<<<<<<.<<<.<<<<<........>.>>>>.>>>.>>>>>>>....'
+    concensus = concensus.replace('<', '(').replace('>', ')')
     rna_list = Fct.parse_masoud_file(path_file_rnas)
 
     benchmarks = do_benchmarks(rna_list, concensus)
@@ -108,6 +115,7 @@ if __name__ == '__main__':
     #Now that we have all the info, we want to create a list of
     node_names = benchmarks.keys()
     paths = Fct.paths_root_leafs(node_names)
+    print paths
 
     #Since we are lazy, lets do a latex file
     list_tex = [LaTeX.standard_header()]
