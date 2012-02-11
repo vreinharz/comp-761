@@ -2,40 +2,44 @@
 """
 import random
 
-def find_parent(id, node_names):
-    """Given a list of node names in the format A+B+C where A is the 
-    unique node identifier and B,C its children name, and the id of a 
-    node, the output is the id of the parent.
-    """
-    for name in node_names:
-        if id in name.split('+')[1:]:
-            return name.split('+')[0]
+def find_node_children(id, node_names):
+    for x in node_names:
+        frags = x.split('+')
+        if frags[0] == id:
+            if len(frags) == 1:
+                return None
+            else:
+                return tuple(frags[1:])
     return None
 
-def paths_root_leafs(node_names):
-    """Given a list of node names in the format A+B+C where A is the 
-    unique node identifier and B,C its children name, the output
-    is a list of tuples, each one being the list of nodes from the root
-    to a leaf
-    """
-    paths = []
-    leafs = [x[:-2] for x in node_names if x[-2:] == '++']
-    ids = [x.split('+')[0] for x in node_names]
-
+def find_root(node_names):
+    ids = (x.split('+')[0] for x in node_names)
     for id in ids:
         #The root is the only id which is not a children in all nodes
         if all([not id in x.split('+')[1:] for x in node_names]):
-            root = id
-            break
+            return id
+    return None
 
-    for leaf in leafs:
-        paths.append([leaf]) #we add a new path leaf-root
-        actual = leaf
-        while actual is not root:
-            actual = find_parent(actual, node_names)
-            paths[-1].append(actual)
-        paths[-1] = list(reversed(paths[-1]))
+def paths_node_leaves(node, node_names):
+    """Given a list of node names in the format A+B+C where A is the 
+    unique node identifier and B,C its children name, the output
+    is a list of list, each one being a path of nodes from the root
+    to a leaf
+    """
+    paths = []
+    leaves = [x for x in node_names if '+' not in x]
+    ids = [x.split('+')[0] for x in node_names]
+    children = find_node_children(node, node_names)
+    if children is None:
+        return [[node]]
+    for child in children:
+        child_paths = paths_node_leaves(child, node_names)
+        for x in child_paths:
+            new_path = [node]
+            new_path.extend(x)
+            paths.append(new_path)
     return paths
+    
 
 def do_stats(numbers):
     """Given a list of numbers, the output is the tuple:
@@ -226,5 +230,4 @@ if __name__ == '__main__':
         'Z34>((((((WQE',
         '(PO}E(((((WEW',
         '(S:>}ZZ((((((']))[0]
-    print a
     print mutate_rna(a)

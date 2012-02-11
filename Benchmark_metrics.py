@@ -36,8 +36,8 @@ def do_benchmarks(rna_list, concensus):
     benchmark = {} #We will keep track of the benchmark in this dict
     pop_time = 0
     bench_time = 0
-    for counter_rna, rna in enumerate(rna_list): 
-        print 'prossing rna nb: ', counter_rna + 1
+    for counter_rna, rna in enumerate(rna_list.keys()): 
+        print 'processing rna nb: ', counter_rna + 1
         benchmark[rna] = {}
         #Now we want to generate a population, and do all the benchmarks
         #on them.
@@ -98,8 +98,8 @@ def plot_benchmarks(benchmarks, paths, metric):
         for i, node_id in enumerate(path):
             data.append(get_node_stats(node_id, benchmarks, metric))
         plt.boxplot(data)    
-        plt.xlabel('->'.join(path), fontsize='22')
-        plt.ylabel(metric, fontsize='22')
+        plt.xlabel('$Evolution goes this ways \\Rightarrow')
+        plt.ylabel('$\s$' % metric, fontsize='22')
         plt.rc('font', size=17)
         plt.savefig('%s_%s' % ('_'.join(path), metric))
         
@@ -111,11 +111,10 @@ if __name__ == '__main__':
     rna_list = Fct.parse_masoud_file(path_file_rnas)
 
     benchmarks = do_benchmarks(rna_list, concensus)
-    
     #Now that we have all the info, we want to create a list of
     node_names = benchmarks.keys()
-    paths = Fct.paths_root_leafs(node_names)
-    print paths
+    root = Fct.find_root(rna_list.keys())
+    paths = Fct.paths_node_leaves(root, rna_list.keys())
 
     #Since we are lazy, lets do a latex file
     list_tex = [LaTeX.standard_header()]
