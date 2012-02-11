@@ -1,3 +1,6 @@
+import sys
+import Functions 
+
 class rna_leaf():
     def __init__(self,number,name,sequence):
         self.number = number
@@ -55,16 +58,34 @@ def Sankoff(rna1, rna2, weights=None):
             sank.append(tuple([rna1[i][j] + rna2[i][j] for j in range(4)]))
         return tuple(sank)
 
-class internal_node():
-
-    def __init__(self, left, right, data=None):
-        self.left = left
-        self.right = right
+class node():
+    def __init__(self, children=None, data=None):
+        #children is a list of nodes
+        if children:
+            self.children = children[:]
+        else:
+            self.children = []
         self.data = data
 
-if __name__ == '__main__':
-    rna2 = rna_leaf('1', 'a', 'UAGC')
-    rna1 = rna_leaf('2', 'b', 'UAGC')
-    print Sankoff(((1,1,1,1),(1,2,3,4),(1,2,3,4),(1,2,1,1)), 
-    ((1,1,1,1),(1,2,3,4),(1,2,3,4),(1,2,1,1)))
+def Newick_parser(tree):
+    positions = Functions.bp_positions(tree)
+    if not positions:
+        return tuple(tree.replace('+', '_').split('|'))#+ is our node sep.
+    positions.remove((0, len(tree)-1))
+    commas = [i for i, x in enumerate(tree) if x == ',']
+    separators = []
+    #We check for all separators of our current node
+    for i in commas:
+        if all([ (i < x[0] or x[1] < i) for x in positions]):
+            separators.append(i)
+    newick_vals = [Newick_parser(tree[1:separators[0]]),
+                   Newick_parser(tree[separators[-1]+1:-1])]
+    for i in range(1, len(separators)-1):
+        newick_vals.append(tree[separators[i]+1:separators[i+1]])
+    return newick_vals
 
+
+if __name__ == '__main__':
+    tree_seq = [x.strip() for x in open('sample.tree')][0][1:-1]
+    print Functions.bp_positions(tree_seq)
+    print Newick_parser(tree_seq)
