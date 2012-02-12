@@ -1,6 +1,5 @@
 import Functions 
 import sys
-leaves_counter = 0
 
 def Sankoff(rnas, weights=None):
     """Given a list of rnas sequence or profiles (must be a 4-tuple
@@ -43,8 +42,6 @@ def Newick_parser(tree):
         is a string of its name.
     """
     if tree[0] != '(':
-        global leaves_counter
-        leaves_counter +=1
         return tree.replace('+', '_').split('|')[-1]
     tree = tree[1:-1]
     positions = Functions.bp_positions(tree)
