@@ -1,6 +1,7 @@
 import os
 import sys
 import time
+import multiprocessing as MP
 import Functions as Fct
 import ViennaRNA as VRNA
 import LaTeX
@@ -28,25 +29,23 @@ metrics_list = ['mfe', 'mfe_masked', 'mfe_bp_distance',
                 'masked_bp_distance', 'mfe_energy', 'masked_energy']
 
 
-def do_benchmarks(rna_list, concensus):
-    """Fill a dictionnary benchmark with the Functions.do_stats
+def do_benchmarks(rna_list, concensus, tasks_queue, out_queue):
+    """Should be called with do_benchmarks_MP.
+    Fill a dictionnary benchmark with the Functions.do_stats
     output for the 6 metric. the keys of benchmark are the node
     names, values a dict{"metric_name", Functions.do_stats}
     """
     benchmark = {} #We will keep track of the benchmark in this dict
-    pop_time = 0
-    bench_time = 0
-    for counter_rna, rna in enumerate(rna_list.keys()): 
-        print 'processing rna nb: ', counter_rna + 1
+    while not tasks_queue.empty(): 
+        rna = tasks_queue.get()
+        tasks_queue.task_done()
+        print 'processing rna on process: ', os.getpid()
         benchmark[rna] = {}
         #Now we want to generate a population, and do all the benchmarks
         #on them.
-        pop_s = time.time()
         pop = Fct.rand_rna_population(rna_list[rna])
-        pop_time += time.time() - pop_s
 
         #The first test is the mfe
-        bench_s = time.time()
         mfe = [VRNA.mfe(sequence)[1] for sequence in pop]
         benchmark[rna]['mfe'] = mfe
 
@@ -75,12 +74,31 @@ def do_benchmarks(rna_list, concensus):
         masked_energy = [VRNA.fold_probability(sequence)[1]
                          for sequence in pop]
         benchmark[rna]['masked_energy'] = masked_energy
-        bench_time += time.time() - bench_s
-        print '\tthis rna took:', time.time() - bench_s, 'seconds'
 
-    print 'time to generate all population: ', pop_time, ' seconds'
-    print 'time to execute all benchmarks: ', bench_time, ' seconds'
-    return benchmark
+    out_queue.put(benchmark)
+    print 'This process computed %s benchmarks.' % len(benchmark)
+    return None
+
+def do_benchmarks_MP(rna_list, concensus, nb_processes):
+    out_queue = MP.JoinableQueue()
+    tasks_queue = MP.JoinableQueue()
+    processes = []
+    for k in rna_list.keys():
+        tasks_queue.put(k)
+
+    for i in range(nb_processes):
+        p = MP.Process(target=do_benchmarks, args=(
+            rna_list, concensus, tasks_queue,out_queue, ))
+        processes.append(p)
+        p.start()
+
+    benchmarks = {}
+    for i in range(nb_processes):
+        benchmarks.update(out_queue.get())
+        out_queue.task_done()
+    for p in processes:
+        p.join()
+    return benchmarks
 
 def get_node_stats(node_id, benchmarks, metric):
     """Given a node_id, benchmarks and metric,
@@ -110,12 +128,15 @@ def plot_benchmarks(benchmarks, paths, metric):
         
 
 if __name__ == '__main__':
+    starting_time = time.time()
     path_file_rnas = 'sank.txt'
     concensus = '.....<<<<<<<.<<<.<<<<<........>.>>>>.>>>.>>>>>>>....'
     concensus = concensus.replace('<', '(').replace('>', ')')
     rna_list = Fct.parse_masoud_file(path_file_rnas)
 
-    benchmarks = do_benchmarks(rna_list, concensus)
+    start_time = time.time()
+    benchmarks = do_benchmarks_MP(rna_list, concensus,3)
+    print 'benchmark done after: ', time.time() -start_time, 'seconds'
     #Now that we have all the info, we want to create a list of
     node_names = benchmarks.keys()
     #node_names = [x.split('+')[0] for x in rna_list.keys()]
@@ -124,11 +145,8 @@ if __name__ == '__main__':
 
     #Since we are lazy, lets do a latex file
     list_tex = [LaTeX.standard_header()]
-    plot_time = 0
     for metric in metrics_list:
-        plot_s = time.time()
         plot_benchmarks(benchmarks, paths, metric)
-        plot_time += time.time() - plot_s
         #We add a section for this metric, and we will
         #do 3x2 figures per page.
         list_tex.append("\\newpage\\section{%s}" % 
@@ -137,11 +155,12 @@ if __name__ == '__main__':
         metric_figs_names = [x for x in os.listdir('.') if 
                              x.endswith('%s.png' % metric)]
         list_tex.append(LaTeX.figure_env(metric_figs_names))
-    print 'the time to do the plots is: ', plot_time, ' seconds'
+    print "Graphs done after: ", time.time() - start_time, 'seconds'
     list_tex.append('\\end{document}')
     with open('main.tex', 'w') as latex_file:
         latex_file.write("\n".join(list_tex))
     print 'building TeX file'
     LaTeX.pdf_build('main')
     os.system('rm *.png *.log')
+    print "total time is: ", time.time()-start_time, 'seconds'
 

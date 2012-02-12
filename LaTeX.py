@@ -34,7 +34,6 @@ def figure_env(subfigures_list, width=0.47):
     for i, fig in enumerate(subfigures_list):
         environment.append('\t\\subfloat{}\\includegraphics[width=%s\\textwidth]{%s}' % (width, fig))
         if  (i + 1) % 6 == 0 and (i+1) < (len(subfigures_list)-1):
-            print i
             environment.append('\\end{figure}')
             environment.append('\\clearpage')
             environment.append('\\begin{figure}[h!]\n\t\\centering')
