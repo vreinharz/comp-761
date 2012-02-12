@@ -5,7 +5,6 @@ import Functions as Fct
 import ViennaRNA as VRNA
 import LaTeX
 from matplotlib import pyplot as plt
-
 """The general strategy here will be to recreate the phylogenetic tree
 where each node will contains the profile (as a valid input to
 Function.rand_rna() ).
@@ -27,6 +26,7 @@ profile and apply our 6 metrics to them (contained in VRNA:
 """
 metrics_list = ['mfe', 'mfe_masked', 'mfe_bp_distance', 
                 'masked_bp_distance', 'mfe_energy', 'masked_energy']
+
 
 def do_benchmarks(rna_list, concensus):
     """Fill a dictionnary benchmark with the Functions.do_stats
@@ -97,11 +97,16 @@ def plot_benchmarks(benchmarks, paths, metric):
         data = []
         for i, node_id in enumerate(path):
             data.append(get_node_stats(node_id, benchmarks, metric))
+
+        plt.rc('text', usetex=True)
+        plt.rc('font', size=22)
         plt.boxplot(data)    
-        plt.xlabel('$Evolution goes this ways \\Rightarrow$')
-        plt.ylabel('$%s$' % metric, fontsize='22')
-        plt.rc('font', size=17)
-        plt.savefig('%s_%s' % ('_'.join(path), metric))
+        plt.xlabel(r'Evolution goes this ways $\Rightarrow$')
+        plt.ylabel(r'%s' % metric.replace('_', ' '))
+        plt.savefig('%s_%s' % (path[-1], metric))
+        plt.clf()
+        with open('%s_%s.log' % (path[-1], metric), 'w') as f:
+            f.write(str(data) + '\n')
         
 
 if __name__ == '__main__':
@@ -113,6 +118,7 @@ if __name__ == '__main__':
     benchmarks = do_benchmarks(rna_list, concensus)
     #Now that we have all the info, we want to create a list of
     node_names = benchmarks.keys()
+    #node_names = [x.split('+')[0] for x in rna_list.keys()]
     root = Fct.find_root(rna_list.keys())
     paths = Fct.paths_node_leaves(root, rna_list.keys())
 
@@ -137,5 +143,5 @@ if __name__ == '__main__':
         latex_file.write("\n".join(list_tex))
     print 'building TeX file'
     LaTeX.pdf_build('main')
-    os.system('rm *.png')
+    os.system('rm *.png *.log')
 

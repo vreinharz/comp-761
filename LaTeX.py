@@ -9,16 +9,16 @@ def standard_header(font_size=12, doc_class='article',
     """
     type = ['\\documentclass[%s]{%s}' % (str(font_size), doc_class)]
     packages = ['\\usepackage[english]{babel}',
-                          '\\usepackage{graphicx}'
-                          '\\usepackage{geometry}'
-                          '\\geometry{letterpaper}'
-                          '\\usepackage[cm]{fullpage}'
-                          '\\usepackage{amssymb}'
-                          '\\usepackage{amsmath}'
-                          '\\usepackage{amsthm}'
-                          '\\usepackage{epstopdf}'
-                          '\\usepackage{inputenc}'
-                          '\\usepackage{subfig}']
+                  '\\usepackage{graphicx}'
+                  '\\usepackage{geometry}'
+                  '\\geometry{letterpaper}'
+                  '\\usepackage[cm]{fullpage}'
+                  '\\usepackage{amssymb}'
+                  '\\usepackage{amsmath}'
+                  '\\usepackage{amsthm}'
+                  '\\usepackage{epstopdf}'
+                  '\\usepackage{inputenc}'
+                  '\\usepackage{subfig}']
     title = ['\\title{%s}' % title,
              '\\author{%s}' % author]
     start_doc = ['\\begin{document}',
@@ -31,9 +31,14 @@ def figure_env(subfigures_list, width=0.47):
     with width "width", by default 0.47 which is 2 per row.
     """
     environment = ['\\begin{figure}[h!]\n\t\\centering']
-    for fig in subfigures_list:
+    for i, fig in enumerate(subfigures_list):
         environment.append('\t\\subfloat{}\\includegraphics[width=%s\\textwidth]{%s}' % (width, fig))
-    environment.append('\end{figure}')
+        if  (i + 1) % 6 == 0 and (i+1) < (len(subfigures_list)-1):
+            print i
+            environment.append('\\end{figure}')
+            environment.append('\\clearpage')
+            environment.append('\\begin{figure}[h!]\n\t\\centering')
+    environment.append('\\end{figure}\n\\clearpage')
     return '\n'.join(environment)
 
 def make_table(table, **kwargs):
