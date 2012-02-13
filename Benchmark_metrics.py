@@ -96,13 +96,12 @@ def do_benchmarks_MP(rna_list, concensus, nb_processes):
             rna_list, concensus, tasks_queue,out_queue, ))
         processes.append(p)
         p.start()
-    for p in processes:
-            p.join()
     benchmarks = {}
-    print "Let's retreive the answers now!"
     for i in range(nb_processes):
         benchmarks.update(out_queue.get())
         out_queue.task_done()
+    for p in processes:
+            p.join()
     return benchmarks
 
 def get_node_stats(node_id, benchmarks, metric):
