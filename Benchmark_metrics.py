@@ -2,6 +2,7 @@ import os
 import sys
 import time
 import multiprocessing as MP
+import Queue
 import Functions as Fct
 import ViennaRNA as VRNA
 import LaTeX
@@ -29,16 +30,19 @@ metrics_list = ['mfe', 'mfe_masked', 'mfe_bp_distance',
                 'masked_bp_distance', 'mfe_energy', 'masked_energy']
 
 
-def do_benchmarks(rna_list, concensus, tasks_queue, out_queue):
+def worker_do_benchmarks(rna_list, concensus, tasks_queue, out_queue):
     """Should be called with do_benchmarks_MP.
     Fill a dictionnary benchmark with the Functions.do_stats
     output for the 6 metric. the keys of benchmark are the node
     names, values a dict{"metric_name", Functions.do_stats}
     """
     benchmark = {} #We will keep track of the benchmark in this dict
-    while not tasks_queue.empty(): 
-        rna = tasks_queue.get()
-        tasks_queue.task_done()
+    while True:
+        try:
+            rna = tasks_queue.get(block=False)
+            tasks_queue.task_done()
+        except Queue.Empty:
+            break
         print 'processing rna on process: ', os.getpid()
         benchmark[rna] = {}
         #Now we want to generate a population, and do all the benchmarks
@@ -87,7 +91,7 @@ def do_benchmarks_MP(rna_list, concensus, nb_processes):
         tasks_queue.put(k)
 
     for i in range(nb_processes):
-        p = MP.Process(target=do_benchmarks, args=(
+        p = MP.Process(target=worker_do_benchmarks, args=(
             rna_list, concensus, tasks_queue,out_queue, ))
         processes.append(p)
         p.start()
