@@ -154,7 +154,6 @@ def write_tree_profile(tree, file_obj):
 if __name__ == '__main__':
     tree_seq = [x.strip() for x in open('sample.tree')][0][1:-1]
     #print Functions.bp_positions(tree_seq)
-    
     a = Newick_parser(tree_seq)
     b = make_sankoff_profile(a)
     with open('sank.txt', 'w') as sank:
