@@ -1,5 +1,6 @@
 import os
 import sys
+from optparse import OptionParser
 import time
 import multiprocessing as MP
 import Queue
@@ -127,7 +128,8 @@ def worker_plot_benchmarks(tasks_queue, benchmarks, metric):
         plt.rc('text', usetex=True)
         plt.rc('font', size=22)
         plt.boxplot(data)    
-        plt.xlabel(r'Evolution goes this ways $\Rightarrow$')
+        plt.xlabel('From root to the Leaf  %s.'
+                  % path[-1])
         plt.ylabel(r'%s' % metric.replace('_', ' '))
         plt.savefig('%s_%s' % (path[-1], metric))
         plt.clf()
@@ -160,14 +162,29 @@ def dummy_benchmarks(rna_list, mlist):
         
 
 if __name__ == '__main__':
-    nb_processes = 2
-    starting_time = time.time()
-    path_file_rnas = 'sank.txt'
-    concensus = '.....<<<<<<<.<<<.<<<<<........>.>>>>.>>>.>>>>>>>....'
+    opt = OptionParser()
+    opt.add_option('-f', '--file', dest='filename', default='sank.txt',
+                   help='Path of tree in Masoud format to benchmark')
+    opt.add_option('-o', '--output', dest='output_name', default='main',
+                   help='Name of the pdf that will be outputed')
+    opt.add_option('-p', '--number_processes', dest='nb_processes', 
+                   default=2, help='Max number of processes allowed')
+    opt.add_option('-c', '--concensus', dest='concensus', 
+                #default goes with first tree we used
+              default='.....<<<<<<<.<<<.<<<<<........>.>>>>.>>>.>>>>>>>....',
+                   help='concencus structure of the tree')
+    (options, arguments) = opt.parse_args()
+    path_file_rnas = options.filename
+    nb_processes = options.nb_processes
+    output_name = options.output_name
+    concensus = options.concensus
     concensus = concensus.replace('<', '(').replace('>', ')')
-    rna_list = Fct.parse_masoud_file(path_file_rnas)
+
 
     start_time = time.time()
+
+    rna_list = Fct.parse_masoud_file(path_file_rnas)
+
     benchmarks = do_benchmarks_MP(rna_list, concensus,nb_processes)
     #benchmarks = dummy_benchmarks(rna_list, metrics_list)
     print 'benchmark done after: ', time.time() -start_time, 'seconds'
@@ -191,7 +208,7 @@ if __name__ == '__main__':
         list_tex.append(LaTeX.figure_env(metric_figs_names))
     print "Graphs done after: ", time.time() - start_time, 'seconds'
     list_tex.append('\\end{document}')
-    with open('main.tex', 'w') as latex_file:
+    with open('%s.tex' % output_name, 'w') as latex_file:
         latex_file.write("\n".join(list_tex))
     print 'building TeX file'
     LaTeX.pdf_build('main')

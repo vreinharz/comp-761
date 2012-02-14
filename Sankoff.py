@@ -8,10 +8,10 @@ def Sankoff(rnas, weights=None):
     optional weight dict can be added, there is a default one just below.
     """
     if not weights and any([isinstance(rna, str) for rna in rnas]):
-        weights = {'A':{'A':0, 'C':5, 'G':2, 'U':5},
-                   'C':{'A':5, 'C':0, 'G':5, 'U':2},
-                   'G':{'A':2, 'C':5, 'G':0, 'U':5},
-                   'U':{'A':5, 'C':2, 'G':5, 'U':0}}
+        weights = {'A':{'A':0, 'C':2, 'G':1, 'U':2},
+                   'C':{'A':2, 'C':0, 'G':2, 'U':1},
+                   'G':{'A':1, 'C':2, 'G':0, 'U':2},
+                   'U':{'A':2, 'C':1, 'G':2, 'U':0}}
     #We search for the leaves and sequences
     leaves = []
     internal = []
