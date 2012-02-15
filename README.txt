@@ -1,4 +1,8 @@
 The folder 'src/' contains the modules
+The folder 'data/' contains some data for the project
+The folder 'doc/' contains an automatic generator of documentation for
+    python with "epydoc". Just run: epydoc-2.4 --config epydoc_conf.txt 
+    to generate a pdf.
 
 
 The module Functions.py contains a bunch of functions on RNA that (should)

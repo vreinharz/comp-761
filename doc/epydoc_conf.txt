@@ -1,0 +1,24 @@
+[epydoc]
+modules: ../src/*py
+#modules: ../src/LaTeX.py
+#modules: ../src/ViennaRNA.py
+#modules: ../src/Functions.py
+#modules: ../src/Benchmark_metrics.py
+#modules: ../src/Sankoff.py
+
+output: pdf
+target: ./
+
+verbosity: 0
+
+private: yes
+
+sourcecode: yes
+
+include-log: yes
+
+#name: COMP761
+
+#url: https://github.com/chochem/comp-761
+
+frames: yes

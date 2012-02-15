@@ -39,8 +39,8 @@ def Newick_parser(tree):
     """Given a string of a tree in the Newick format,where
     leafs are the only elements to have names!.
     Will output the tree in the following format:
-        every internal node is a list of its children, every leaf
-        is a string of its name.
+    every internal node is a list of its children, every leaf
+    is a string of its name.
     """
     if tree[0] != '(':
         return tree.replace('+', '_').split('|')[-1]
@@ -95,7 +95,9 @@ def make_sankoff_profile(tree):
 def make_rna_profile(profile, start_char='(', end_char='Z'):
     """Given an rna sequence or profile, will output a 4-tuple
     of strings where each one is the probability of a given nucleotide
-    to be at a given place in the order 'A, C, G, U'"""
+    to be at a given place in the order 'A, C, G, U'.
+    """
+
     probs = {x:[] for x in ('A', 'C', 'G', 'U')}
     if isinstance(profile, str):
         for nuc in profile:
@@ -154,7 +156,8 @@ def write_tree_profile(tree, file_obj):
 
 if __name__ == '__main__':
     opt = OptionParser()
-    opt.add_option('-t', '--tree', dest='tree', default='sample.tree', 
+    opt.add_option('-t', '--tree', dest='tree', 
+                   default='../data/RF00951.tree', 
                    help='file containing a tree in the Newick format')
     opt.add_option('-o', '--output_file', dest='output', default='out.txt',
                    help='Name of output file')
