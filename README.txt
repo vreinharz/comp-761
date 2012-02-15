@@ -17,15 +17,19 @@ Install the ViennaRNA python API as follows:
         http://www.tbi.univie.ac.at/RNA/ViennaRNA-1.8.5.tar.gz
     2- Unpack it:
         >tar -xzf ViennaRNA-1.8.5.tar.gz
+    3- Go inside the ViennaRNA-1.8.5 folder an compile it (no install)
+        >./configure
+        > make
     3- Go inside the ViennaRNA-1.8.5/Perl directory an run 'swig' for python
         >swig python RNA.i
     4- copy the script at the end  into the ViennaRNA-1.8.5/ folder and name
-        it "setup.py". Then run (sudo may be needed):
+        it "setup.py". Then run (sudo may be needed for install):
        >python setup.py build
        >python setup.py install 
     5- open a python shell and try:
         > import RNA
         > RNA.fold('CCCCCAAAGGGGG')
+    6- you can delete de ViennaRNA folder 
 
 Now, the ViennaRNA package has a tricky API, there is a Perl documentation
 at: 
