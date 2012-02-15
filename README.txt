@@ -1,3 +1,6 @@
+The folder 'src/' contains the modules
+
+
 The module Functions.py contains a bunch of functions on RNA that (should)
     only call standard python modules
 The module ViennaRNA.py contains functions calling the ViennaRNA 1.8.5 package python API. The instructions for installations are below.
