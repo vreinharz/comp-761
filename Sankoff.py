@@ -1,5 +1,6 @@
 import Functions 
 import sys
+from optparse import OptionParser
 
 def Sankoff(rnas, weights=None):
     """Given a list of rnas sequence or profiles (must be a 4-tuple
@@ -152,9 +153,18 @@ def write_tree_profile(tree, file_obj):
 
 
 if __name__ == '__main__':
-    tree_seq = [x.strip() for x in open('sample.tree')][0][1:-1]
+    opt = OptionParser()
+    opt.add_option('-t', '--tree', dest='tree', default='sample.tree', 
+                   help='file containing a tree in the Newick format')
+    opt.add_option('-o', '--output_file', dest='output', default='out.txt',
+                   help='Name of output file')
+    (options, arguments) = opt.parse_args()
+    tree = options.tree
+    output =options.output
+    
+    tree_seq = [x.strip() for x in open(tree)][0][1:-1]
     #print Functions.bp_positions(tree_seq)
     a = Newick_parser(tree_seq)
     b = make_sankoff_profile(a)
-    with open('sank.txt', 'w') as sank:
+    with open(output, 'w') as sank:
         write_tree_profile(b, sank)

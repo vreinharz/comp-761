@@ -168,7 +168,7 @@ if __name__ == '__main__':
     opt.add_option('-o', '--output', dest='output_name', default='main',
                    help='Name of the pdf that will be outputed')
     opt.add_option('-p', '--number_processes', dest='nb_processes', 
-                   default=2, help='Max number of processes allowed')
+                   type='int',default=2, help='Max number of processes allowed')
     opt.add_option('-c', '--concensus', dest='concensus', 
                 #default goes with first tree we used
               default='.....<<<<<<<.<<<.<<<<<........>.>>>>.>>>.>>>>>>>....',
@@ -211,7 +211,7 @@ if __name__ == '__main__':
     with open('%s.tex' % output_name, 'w') as latex_file:
         latex_file.write("\n".join(list_tex))
     print 'building TeX file'
-    LaTeX.pdf_build('main')
+    LaTeX.pdf_build(output_name)
     os.system('rm *.png')
     print "total time is: ", time.time()-start_time, 'seconds'
 
