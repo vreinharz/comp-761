@@ -342,11 +342,11 @@ void sankoff(node*root){
 		for(int i =0 ; i < crnt->scr.size();i++){
 			sum = 0 ;
 			p = new profile();
-			sum = crnt->scr[i].scr[0]+crnt->scr[i].scr[1]+crnt->scr[i].scr[2]+crnt->scr[i].scr[3];
-			p->a = ((float)crnt->scr[i].scr[0])/((float)sum);
-			p->c = ((float)crnt->scr[i].scr[1])/((float)sum);
-			p->g = ((float)crnt->scr[i].scr[2])/((float)sum);
-			p->u = ((float)crnt->scr[i].scr[3])/((float)sum);
+			sum = (1/(float)crnt->scr[i].scr[0])+(1/(float)crnt->scr[i].scr[1])+(1/(float)crnt->scr[i].scr[2])+(1/(float)crnt->scr[i].scr[3]);
+			p->a = (1/(float)crnt->scr[i].scr[0])/((float)sum);
+			p->c = (1/(float)crnt->scr[i].scr[1])/((float)sum);
+			p->g = (1/(float)crnt->scr[i].scr[2])/((float)sum);
+			p->u = (1/(float)crnt->scr[i].scr[3])/((float)sum);
 			crnt->pr.push_back(*p);
 		}
 		crnt->set = true;
