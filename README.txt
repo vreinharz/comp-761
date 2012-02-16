@@ -1,4 +1,5 @@
-The folder 'src/' contains the modules
+The folder 'src/' contains the python modules
+The folder 'src_cpp' contains the c++ implementation of the Sankoff algo.
 The folder 'data/' contains some data for the project
 The folder 'doc/' contains an automatic generator of documentation for
     python with "epydoc". Just run: epydoc-2.4 --config epydoc_conf.txt 
