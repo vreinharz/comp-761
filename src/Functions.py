@@ -78,7 +78,7 @@ def find_complement_bp(position, bps):
     return None
 
 def masoud_to_probability_vector(masoud_format, 
-                              range_start='(', range_end='Z'):
+                              range_start='!', range_end='~'):
     """Given the probs in the Masoud* format "for an RNA
     sequence, with the encoding starting at the "range_start" char and
     ending at the "range_end" char, we output a tuple of 4-tuple as:

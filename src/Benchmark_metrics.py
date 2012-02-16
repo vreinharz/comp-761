@@ -45,8 +45,7 @@ def worker_do_benchmarks(rna_list, concensus, tasks_queue, out_queue):
             break
         print 'processing rna on process: ', os.getpid()
         benchmark[rna] = {}
-        #Now we want to generate a population, and do all the benchmarks
-        #on them.
+        #:Now we want to generate a population, to do all the benchmarks
         pop = Fct.rand_rna_population(rna_list[rna])
 
         #The first test is the mfe
@@ -163,7 +162,8 @@ def dummy_benchmarks(rna_list, mlist):
 
 if __name__ == '__main__':
     opt = OptionParser()
-    opt.add_option('-f', '--file', dest='filename', default='sank.txt',
+    opt.add_option('-f', '--file', dest='filename', 
+                   default='../data/RF00951.sank',
                    help='Path of tree in Masoud format to benchmark')
     opt.add_option('-o', '--output', dest='output_name', default='main',
                    help='Name of the pdf that will be outputed')

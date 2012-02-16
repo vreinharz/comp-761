@@ -92,7 +92,7 @@ def make_sankoff_profile(tree):
     tree = ('_'.join(name), Sankoff(sank), tuple(children))
     return tree
 
-def make_rna_profile(profile, start_char='(', end_char='Z'):
+def make_rna_profile(profile, start_char='!', end_char='~'):
     """Given an rna sequence or profile, will output a 4-tuple
     of strings where each one is the probability of a given nucleotide
     to be at a given place in the order 'A, C, G, U'.
