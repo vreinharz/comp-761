@@ -40,7 +40,6 @@ def paths_node_leaves(node, node_names):
             paths.append(new_path)
     return paths
     
-
 def do_stats(numbers):
     """Given a list of numbers, the output is the tuple:
         (average, standard_deviation, min, max)

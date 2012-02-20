@@ -1,4 +1,4 @@
-The folder 'src/' contains the python modules
+The folder 'src/' contains the python modules.
 The folder 'src_cpp' contains the c++ implementation of the Sankoff algo.
 The folder 'data/' contains some data for the project
 The folder 'doc/' contains an automatic generator of documentation for

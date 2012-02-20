@@ -43,6 +43,7 @@ def figure_env(subfigures_list, width=0.47):
 def make_table(table, **kwargs):
     """auto_generates a table
     """
+    pass
 
 def pdf_build(file_name, bib=None, keep_log=None):
     """Build the pdf and remove built files. If bib is not None,
