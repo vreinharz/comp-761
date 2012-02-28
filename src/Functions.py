@@ -145,21 +145,20 @@ def weighted_selection(elements, weights=None):
     else:
         return random.choice(elements)
 
-def rand_rna_bp_complement(nuc):
-    """Given an rna nucleotide, will output a random nucleotide which
-    can form a base pair with the inputed one.
+def rna_bp_complement(nuc):
+    """Given an rna nucleotide, will output the complement
     """
     if nuc == 'A':
         return 'U'
     elif nuc == 'C':
         return 'G'
     elif nuc == 'G':
-        return random.choice(('U', 'C'))
+        return 'C'
     elif nuc == 'U':
-        return random.choice(('A', 'G'))
+        return 'A'
     return None
 
-def rand_rna(nuc_probs):
+def rand_rna(nuc_probs, bp_pos=None):
     """Generates a random RNA sequence given probs
     at each positions contained in "nuc_probs. It should be
     an iterable where each element in a 4-tuples (P_A, P_C_, P_G, P_U)
@@ -167,16 +166,20 @@ def rand_rna(nuc_probs):
     nucleotides = ['A', 'C', 'G', 'U']
     rna = []
     for position in nuc_probs:
+        if bp_pos:
+            comp = [x[0] for x in bp_pos if x[1] == position]
+            if len(comp) == 1:
+                rna.append(rna_bp_complement(rna[comp[0]]))
         rna.append(weighted_selection(nucleotides, position))
     return ''.join(rna)
 
-def rand_rna_population(probs, size=1000):
+def rand_rna_population(probs, size=1000, bp_mask=None):
     """Generates "size" random RNAs given the probability
     vector "probs" who must be an iterator, the size
     of the desired RNA, where each position is a 4-tuple
     with the probs of the nucleotides: (P_A, P_C, P_G, P_U)
     """
-    return [rand_rna(probs) for x in range(size)]
+    return [rand_rna(probs,bp_pos=bp_mask) for x in range(size)]
 
 def mutate_rna(rna, mask=None, nuc_probs=None,
                                mutate_into_probs=None):
@@ -217,9 +220,9 @@ def mutate_rna(rna, mask=None, nuc_probs=None,
                 #We check if there is a complement, if there is a mask
                 cplt = find_complement_bp(i, mask_bp)
                 if cplt and cplt[0] != i:
-                    rna[cplt[0]] = rand_rna_bp_complement(nuc)
+                    rna[cplt[0]] = rna_bp_complement(nuc)
                 elif cplt and cplt[1] != i:
-                    rna[cplt[1]] = rand_rna_bp_complement(nuc)
+                    rna[cplt[1]] = rna_bp_complement(nuc)
     return ''.join(rna)
 
 if __name__ == '__main__':

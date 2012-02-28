@@ -46,7 +46,9 @@ def worker_do_benchmarks(rna_list, concensus, tasks_queue, out_queue):
         print 'processing rna on process: ', os.getpid()
         benchmark[rna] = {}
         #:Now we want to generate a population, to do all the benchmarks
-        pop = Fct.rand_rna_population(rna_list[rna])
+        pop = Fct.rand_rna_population(rna_list[rna], 
+                                bp_mask=Fct.bp_positions(concensus),
+                                size=1000)
 
         #The first test is the mfe
         mfe = [VRNA.mfe(sequence)[1] for sequence in pop]
