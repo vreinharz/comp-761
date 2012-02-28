@@ -165,11 +165,12 @@ def rand_rna(nuc_probs, bp_pos=None):
     """
     nucleotides = ['A', 'C', 'G', 'U']
     rna = []
-    for position in nuc_probs:
+    for i, position in enumerate(nuc_probs):
         if bp_pos:
-            comp = [x[0] for x in bp_pos if x[1] == position]
+            comp = [x[0] for x in bp_pos if x[1] == i]
             if len(comp) == 1:
                 rna.append(rna_bp_complement(rna[comp[0]]))
+                continue
         rna.append(weighted_selection(nucleotides, position))
     return ''.join(rna)
 
@@ -227,9 +228,4 @@ def mutate_rna(rna, mask=None, nuc_probs=None,
 
 if __name__ == '__main__':
 
-    a=  rand_rna_population(masoud_to_probability_vector([
-        '(64<:((ZZZASD',
-        'Z34>((((((WQE',
-        '(PO}E(((((WEW',
-        '(S:>}ZZ((((((']))[0]
-    print mutate_rna(a)
+    print rand_rna([( 0, 0, 0, 1), ( 0,0,0,1)], bp_pos=[(0,1)])
