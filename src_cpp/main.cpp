@@ -11,7 +11,9 @@ using namespace std;
 
 char rangeStart ='!';
 char rangeEnd = '~' ;
-
+string structure = ".....<<<<<<<.<<<.<<<<<........>.>>>>.>>>.>>>>>>>....";
+int * treeStructure;
+int bpNum=0;
 //string inputName = "RF.tree";
 int table[4][4]={{9,214,131,223},{214,0,225,131},{131,225,0,214},{223,131,214,9}};
 ofstream out("output.txt");
@@ -44,6 +46,58 @@ public:
 	vector <node*>childs;
 };
 
+void makingTreeStr(){
+	treeStructure = new int[structure.size()];
+	int *seen = new int[structure.size()];
+	int open=0,close=0;
+	for(int i = 0 ; i < structure.size() ; i++) {
+		if(structure[i] == '<'){
+			close = open;
+			seen[open]=0;
+			treeStructure[i] = open;
+			open ++;
+		}
+		else if(structure[i] == '>'){
+			treeStructure[i] = close;
+			seen[close]=1;
+			for( int j = close; j >=0 ; j--){
+				if(seen[j]==0){
+					close = j;
+					break;
+				}
+			}
+		}
+		else
+			treeStructure[i] = -1;
+	}
+	bpNum = open-1;
+}
+void considerStruct ( node * mynode){
+	int first=-1, second=-1;
+	for(int i = 0 ; i < bpNum ; i++){
+		first=-1; 
+		second=-1;
+		for(int j = 0 ; j < structure.size(); j++){
+			if(treeStructure[j] == i && first ==-1)
+				first = j;
+			else if(treeStructure[j] == i && first !=-1){
+				second = j;
+				break;
+			}
+		}
+		mynode->pr[second].a = mynode->pr[first].u;
+		mynode->pr[second].u = mynode->pr[first].a;
+		mynode->pr[second].g = mynode->pr[first].c;
+		mynode->pr[second].c = mynode->pr[first].g;
+		
+		
+		mynode->scr[second].scr[A] =mynode->scr[first].scr[U];
+		mynode->scr[second].scr[U] =mynode->scr[first].scr[A];
+		mynode->scr[second].scr[C] =mynode->scr[first].scr[G];
+		mynode->scr[second].scr[G] =mynode->scr[first].scr[C];
+
+	}
+}
 node* makeTree(string str, node* root){
 	int * par;
 	int i, counter = 0 ,start, end ;
@@ -271,6 +325,7 @@ void makingScore(node *root){
 				root->pr.push_back(*tempP);
 			}
 		}
+		considerStruct(root);
 		root->set=true;
 	}
 	
@@ -315,6 +370,7 @@ score calMin(score scr){
 	}
 	return newScr;
 }
+
 void sankoff(node*root){
 	node * crnt;
 	while(root->set!=true){
@@ -349,6 +405,7 @@ void sankoff(node*root){
 			p->u = (1/(float)crnt->scr[i].scr[3])/((float)sum);
 			crnt->pr.push_back(*p);
 		}
+		considerStruct(crnt);
 		crnt->set = true;
 
 	}
@@ -393,8 +450,8 @@ void print(node *root){
 }
 int main(int argc,char*argv[]){
 	string mainStr;
-	char *temp;
-	temp = new char[50000];
+	char *temp = new char[50000];
+	makingTreeStr();
 	string inputName(argv[1]);
 	ifstream in(inputName.c_str());
 	in.getline(temp,50000);
