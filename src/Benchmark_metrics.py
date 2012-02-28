@@ -7,6 +7,8 @@ import Queue
 import Functions as Fct
 import ViennaRNA as VRNA
 import LaTeX
+import matplotlib
+matplotlib.use('Agg')
 from matplotlib import pyplot as plt
 """The general strategy here will be to recreate the phylogenetic tree
 where each node will contains the profile (as a valid input to
