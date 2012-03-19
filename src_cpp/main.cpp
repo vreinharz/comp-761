@@ -11,7 +11,7 @@ using namespace std;
 
 char rangeStart ='!';
 char rangeEnd = '~' ;
-string structure = ".....<<<<<<<.<<<.<<<<<........>.>>>>.>>>.>>>>>>>....";
+string structure = "..............................................";
 int * treeStructure;
 int bpNum=0;
 //string inputName = "RF.tree";
