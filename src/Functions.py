@@ -1,6 +1,40 @@
 """This file contains functions that only call standard libraries
 """
 import random
+from fractions import Fraction
+
+def rank_nodes(paths):
+    #Given a list of paths, output a list of lists where the nodes in every
+    #sublist are at the same "temporal" level
+    paths = sorted(paths, key=lambda x:len(x), reverse=True)
+    total_list = {}
+    for path in paths:
+        if total_list == {}: #The first path is our baseline
+            for i, node in enumerate(path):
+                rank = Fraction(i+1, len(path))
+                rank_n = rank.numerator
+                rank_d = rank.denominator
+                total_list[rank_n, rank_d] = [node]
+            continue
+        for i, node in enumerate(path):
+            if any([ node in total_list[x] for x in total_list]):
+                #if the node already in our list we continue
+                continue
+            if i == 0:
+                print "The root is not already in the total paths, error, error"
+                sys.exit(1)
+            rank = Fraction(i+1, len(path))
+            rank_n = rank.numerator
+            rank_d = rank.denominator
+            if (rank_n, rank_d) in total_list:
+                total_list[rank_n, rank_d].append(node)
+            else:
+                total_list[rank_n, rank_d] = [node]
+    sorted_keys = sorted(total_list.keys(), key=lambda x:float(x[0])/x[1])
+    ranked_nodes_path = []
+    for k in sorted_keys:
+        ranked_nodes_path.append(total_list[k])
+    return ranked_nodes_path
 
 def find_node_children(id, node_names):
     for x in node_names:

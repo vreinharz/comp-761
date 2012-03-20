@@ -50,7 +50,7 @@ def worker_do_benchmarks(rna_list, concensus, tasks_queue, out_queue):
         #:Now we want to generate a population, to do all the benchmarks
         pop = Fct.rand_rna_population(rna_list[rna], 
                                 bp_mask=Fct.bp_positions(concensus),
-                                size=1000)
+                                size=1)
 
         #The first test is the mfe
         mfe = [VRNA.mfe(sequence)[1] for sequence in pop]
@@ -118,6 +118,23 @@ def get_node_stats(node_id, benchmarks, metric):
             return benchmarks[node][metric]
     return None
     
+def plot_one_path_benchmarks(one_path, benchmarks, metric):
+    #Do plot for one merged path of all the tree
+    data = []
+    for ranked_nodes in one_path:
+        data.append([])
+        for node_id in ranked_nodes:
+            data[-1].extend(get_node_stats(node_id, benchmarks, metric))
+
+        plt.rc('text', usetex=True)
+        plt.rc('font', size=22)
+        plt.boxplot(data)    
+        plt.xlabel('From root to the Leafs')
+        plt.ylabel(r'%s' % metric.replace('_', ' '))
+        plt.savefig('%s_%s' % ('merged', metric))
+        plt.clf()
+    return None
+
 def worker_plot_benchmarks(tasks_queue, benchmarks, metric):
     while True:
         path = tasks_queue.get()
@@ -197,11 +214,15 @@ if __name__ == '__main__':
     #node_names = [x.split('+')[0] for x in rna_list.keys()]
     root = Fct.find_root(rna_list.keys())
     paths = Fct.paths_node_leaves(root, rna_list.keys())
+    one_path = Fct.rank_nodes(paths)
+    print one_path
 
     #Since we are lazy, lets do a latex file
     list_tex = [LaTeX.standard_header()]
     for metric in metrics_list:
-        plot_benchmarks_MP(benchmarks, paths, metric, nb_processes)
+        #plot_benchmarks_MP(benchmarks, paths, metric, nb_processes)
+        plot_one_path_benchmarks(one_path, benchmarks, metric)
+
         #We add a section for this metric, and we will
         #do 3x2 figures per page.
         list_tex.append("\\newpage\\section{%s}" % 
