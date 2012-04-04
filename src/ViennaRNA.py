@@ -4,6 +4,7 @@ For instructions on how to install it, go at the bottom of:
 """
 import RNA
 import Functions
+import math
 
 RNA.cvar.fold_constrained = 1 #To allow use of constraints on folding
 
@@ -36,7 +37,14 @@ def fold_probability(S, G=None):
         dict_probabilities[left,right] =RNA.get_pr(left + 1,right +1)
     return (struct, energy, dict_probabilities)
 
-
+def entropy(Dic):
+    """Returns the entropy value of a set of probabilities stored in a dictionary
+    """
+    ent=0
+    for i,j in Dic.iteritems():
+        if j > 0: ent = ent + (j * math.log(j,2))
+    ent=ent*-1
+    return ent
 
 if __name__ == '__main__':
     a = 'GGGGCCCC'

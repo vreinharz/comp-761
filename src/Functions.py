@@ -137,6 +137,51 @@ def masoud_to_probability_vector(masoud_format,
             float(ord(masoud_format[3][pos])-start)/(end-start)
         ))
     return tuple(vector)
+    
+def mickael_to_probability_vector(mickael_format, 
+                              range_start='!', range_end='~'):
+    """Given the probs in the Masoud* format "for an RNA
+    sequence, with the encoding starting at the "range_start" char and
+    ending at the "range_end" char, we output a tuple of 4-tuple as:
+    ( (P_A_1, P_C_1, P_G_1, P_U_1), ..., (P_A_n, P_C_n, P_G_n, P_U_n))
+    where 'P_X_i' is the probability of having nucleotide 'X' at pos. 'i'.
+
+    *Masoud format: 4 elements, each line represent a nucleotide
+    probability in the order: "A, C, G, U". At the line of nucleotide
+    'X', the i-th character represent the probability of having 'X'
+    at position 'i'. If the i-th character is 'y', the probability of
+    'X' at position 'i' is: (ord('y') - ord(range_start)) /(
+        ord(range_end)-ord(range_start))
+    """
+    vector = []
+    probs_range = ord(range_start) - ord(range_end)
+    start = ord(range_start)
+    end = ord(range_end)
+    for pos in range(len(mickael_format[0])):
+        if mickael_format[0][pos] == '!' and mickael_format[1][pos] == '!' and mickael_format[2][pos] == '!' and mickael_format[3][pos] == '!': 
+            vector.append((0.25,0.25,0.25,0.25))#The ancestor program returns NULL
+    	else:
+            vector.append((
+                float(ord(mickael_format[0][pos])-start)/(end-start),
+                float(ord(mickael_format[1][pos])-start)/(end-start),
+                float(ord(mickael_format[2][pos])-start)/(end-start),
+                float(ord(mickael_format[3][pos])-start)/(end-start)
+            ))
+    return tuple(vector)    
+
+def mickael_leaves_to_probability_vector(sequence):
+    vector = []
+    for pos in range(len(sequence)):#Assign the probabilities of the leaves
+        if sequence[pos] == 'A':
+            vector.append((1.0,0.0,0.0,0.0))
+        elif sequence[pos] == 'C':
+	        vector.append((0.0,1.0,0.0,0.0))
+        elif sequence[pos] == 'G':
+	        vector.append((0.0,0.0,1.0,0.0))
+        elif sequence[pos] == 'T':
+	        vector.append((0.0,0.0,0.0,1.0))
+    return tuple(vector)
+	
 
 def parse_masoud_file(file_path):
     """Given the path to a file with a list of RNAs in the masoud format,
@@ -157,6 +202,92 @@ def parse_masoud_file(file_path):
         else:
             position += 1
     return dict_rnas
+    
+def parse_ancestors_file(file_path):
+    """Given the path to a file with in the ancestor format,
+    the output is a dictionnary where keys are the name of the RNA
+    and values are the RNA-sequence
+    """
+    tree_raw_info = [x.strip() for x in open(file_path)]
+    dict_nodes = {}
+    dict_possible_leaves = {}
+    position = 0
+    #print tree_raw_info
+    while position < len(tree_raw_info):
+    	#print tree_raw_info[position]
+    	if len(tree_raw_info[position]) > 1:
+    		if tree_raw_info[position][0] == '>':#Annouce a node.
+    			if tree_raw_info[position][1] == ' ':#It is not a leaf
+    				name = tree_raw_info[position].strip('> ')#We don't want to keep '>'
+    				name=name.rstrip('+')
+    				dict_nodes[name]=tree_raw_info[position+1]#Add the nodes
+    				if name.count('+') < 2:#If the nodes are the parents of a leave
+    					leaf=name.split('+')
+    					dict_nodes[leaf[0]]=dict_possible_leaves[leaf[0]]#Add one leaf 
+    					dict_nodes[leaf[1]]=dict_possible_leaves[leaf[1]]#Add the other leaf
+    			else:#It is a leaf
+    				name = tree_raw_info[position].strip('>')#We don't want to keep '>'
+    				dict_possible_leaves[name] = tree_raw_info[position+1]#Add the leaves to a temporary structure
+    			position += 2
+        	else:
+        		position += 1
+        else:
+        	position +=1
+    return dict_nodes
+
+def parse_ancestors_prob_file(file_path):
+    """Given the path to a file with in the ancestor_prob format,
+    the output is a dictionnary where keys are the name of the RNA
+    and values are the probability vectors
+    """
+    tree_raw_info = [x.strip() for x in open(file_path)]
+    dict_nodes = {}
+    dict_possible_leaves = {}
+    vector = []
+    position = 0
+    flag_fill_tree = 0
+    flag_fill_nodes = 1
+    #print tree_raw_info
+    while position < len(tree_raw_info):
+    	#print tree_raw_info[position]
+        if len(tree_raw_info[position]) > 1:
+            if flag_fill_tree == 0:    	
+                if tree_raw_info[position][0] == '>': #Annouce a leaf.
+                    name = tree_raw_info[position].strip('>')#We don't want to keep '>'
+                    dict_possible_leaves[name] = mickael_leaves_to_probability_vector(tree_raw_info[position+1])#Add the leaves to a temporary structur
+                    position += 2
+                else:
+                    if tree_raw_info[position] == '#Corresponding tree, official classification':#Annouce that all the possible leaves hve been scanned
+                          flag_fill_tree = 1
+                    position += 1
+            else:
+                if flag_fill_nodes == 0:
+                    if tree_raw_info[position][0] == '>':#Annouce a name.
+                        name = tree_raw_info[position][1:]#We don't want to keep '>'
+                        name=name[0:name.rfind('+')]#We don't want to keep '+   52' or something similar
+                        name=name.strip()#We don't want to keep spaces
+                        #The four next positions are the probs 
+                        mickael_vector = [tree_raw_info[position + x] for x in range(1,5)]
+                        dict_nodes[name] = mickael_to_probability_vector(mickael_vector)
+                        position+=5
+                        if name.count('+') < 3:#If the nodes are the parents of a leave
+                            name=name.strip()
+                            leaf=name.split('+')                           
+                            dict_nodes[leaf[0]]=dict_possible_leaves[leaf[0]]#Add one leaf 
+                            dict_nodes[leaf[1]]=dict_possible_leaves[leaf[1]]#Add the other leaf
+                    else:
+                        if '#Ancestors confidence levels' in tree_raw_info[position]:
+                            flag_fill_nodes = 1
+                        position +=1
+                else:
+                    if '#Ancestors probabilities ascii' in tree_raw_info[position]:#Annouce a node.
+                        flag_fill_nodes = 0
+                    position += 1
+        else:
+             position +=1
+    return dict_nodes
+   
+
 
 def weighted_selection(elements, weights=None):
     """Takes as input two list. The first is the elements and in the same

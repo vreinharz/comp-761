@@ -27,19 +27,21 @@ profile and apply our 6 metrics to them (contained in VRNA:
         "mfe_energy"
     6) Energy of ensemble of folding masked with concensus
         "masked_energy"
+    7) Entropy 
 
 """
 metrics_list = ['mfe', 'mfe_masked', 'mfe_bp_distance', 
-                'masked_bp_distance', 'mfe_energy', 'masked_energy']
+                'masked_bp_distance', 'mfe_energy', 'masked_energy', 'entropy']
 
 
 def worker_do_benchmarks(rna_list, concensus, tasks_queue, out_queue):
     """Should be called with do_benchmarks_MP.
     Fill a dictionnary benchmark with the Functions.do_stats
-    output for the 6 metric. the keys of benchmark are the node
+    output for the 7 metric. the keys of benchmark are the node
     names, values a dict{"metric_name", Functions.do_stats}
     """
     benchmark = {} #We will keep track of the benchmark in this dict
+   
     while True:
         rna = tasks_queue.get()
         tasks_queue.task_done()
@@ -48,10 +50,10 @@ def worker_do_benchmarks(rna_list, concensus, tasks_queue, out_queue):
         print 'processing rna on process: ', os.getpid()
         benchmark[rna] = {}
         #:Now we want to generate a population, to do all the benchmarks
-        pop = Fct.rand_rna_population(rna_list[rna], 
-                                bp_mask=Fct.bp_positions(concensus),
-                                size=1000)
-
+        pop = Fct.rand_rna_population(rna_list[rna],size=1000)
+        
+        #pop = [rna_list[rna]]
+        
         #The first test is the mfe
         mfe = [VRNA.mfe(sequence)[1] for sequence in pop]
         benchmark[rna]['mfe'] = mfe
@@ -81,6 +83,11 @@ def worker_do_benchmarks(rna_list, concensus, tasks_queue, out_queue):
         masked_energy = [VRNA.fold_probability(sequence)[1]
                          for sequence in pop]
         benchmark[rna]['masked_energy'] = masked_energy
+        
+        #Entropy
+        ent = [VRNA.entropy(VRNA.fold_probability(sequence)[2])
+        			for sequence in pop]
+        benchmark[rna]['entropy'] = ent
 
     out_queue.put(benchmark)
     print 'This process computed %s benchmarks.' % len(benchmark)
@@ -92,6 +99,7 @@ def do_benchmarks_MP(rna_list, concensus, nb_processes):
     processes = []
     for k in rna_list.keys():
         tasks_queue.put(k)
+        print k
     for i in range(nb_processes):
         tasks_queue.put(None)
 
@@ -192,7 +200,15 @@ if __name__ == '__main__':
                    type='int',default=2, help='Max number of processes allowed')
     opt.add_option('-c', '--concensus', dest='concensus', 
                 #default goes with first tree we used
-              default='.....<<<<<<<.<<<.<<<<<........>.>>>>.>>>.>>>>>>>....',
+              #default='.....<<<<<<<.<<<.<<<<<........>.>>>>.>>>.>>>>>>>....',
+              #default RF00032
+              #default='..............................................',
+              #default RF00130
+              #default='.........................................................................................................',
+              #default RF01990
+              #default='......................................',
+              #default RF01771
+              default='.............................................................................................................',
                    help='concencus structure of the tree')
     (options, arguments) = opt.parse_args()
     path_file_rnas = options.filename
@@ -204,7 +220,14 @@ if __name__ == '__main__':
 
     start_time = time.time()
 
-    rna_list = Fct.parse_masoud_file(path_file_rnas)
+    #rna_list = Fct.parse_masoud_file(path_file_rnas)
+    rna_list = Fct.parse_ancestors_prob_file('../data/RF00951.tree.ancestors.probs.txt')
+    #rna_list = Fct.parse_ancestors_file('../data/RF01771.tree.ancestors')
+    #rna_list = {'9685':'TTTTAAGTATAAGTATGTCCCATGCAAAATTTGGGATATACTTATATTAAAA','9615':'TTTTTAGTATAAGTATGTCCTATGCAATATTTGGGACATACTTATACTAAAA','9785':'ATTTTAGTATAAGTATGTCCCATACAATATTTGGGACATACTTATACTAAAA','9371':'TTTCTAATGTAAGTATGTCTCAGGCAATATTTGGGGCATATTTATATTAAAA','9978':'TTTTAAATATAATTATGTACCATGAAATATTTGGGAAATACTTATACTAAAA','9986':'CTTTTAGCATAAGTATATCACATGCAATATTTGGGACATAATTATGCTAAAA','10116':'TATGTAGTATAAGTATGTCCCATGAAGCATTTGGGATATTATTATATTATAC','10090':'TTTTTAGCGTAAGTAAGTCCCATGCAACATTTGGGATATACTTATACTAAAA','9447':'TAAGAAGTATAAGTATGTCCTATGAAGCATTTGAGACATATGTATACTAAAA','30608':'TTTTCAGTATAAGTATGTCCCATGCAATGTTTGGGACATACTTATACTACAA','9523':'TTAAACTTATAAATATGTCCTGTGAAATATTTAAGACATACTTATGCTAAAA','9483':'TTTTAAGTATAGGTATGTCCCATGCAATTTTGGGGATATAGTTATACTAAAT','9606':'TTCGTAGCATAAATATTTCCCAAGCTTAGTTTGGGACATACTTATGCTAAAA','9593':'TTTTTAGGATAAGTAAATCCCATTCAATATTTGTGACATACTTATCCTAAAA','9555':'TGTTTAGTATAAGTATGTCCCATGCAATATTTAGGATGTACTAATACTAAAC','9534':'TTAAACGTATAAGTATGTCCTGTGAAATATTTAGGACATACTTATGCTAAAA','9534+9555':'TGAAAAATATAAGTATGTCCCATGCAATATTTAGGACATACTTATACTAAAA','9544+9534+9555':'TGAAAAATATAAGTATGTCCCATGCAATATTTAGGACATACTTATACTAAAA','9593+9606':'TTAAAAACATAAGTATATCCCATACAATATTTGGGACATACTTATGCTAAAA','9601+9593+9606':'TTAAAAATATAAGTATGTACCATGCAATATTTGGCACATACTTATACTAAAA','61853+9601+9593+9606':'TTAAAAATATAAGTATGTCCCATGCAATATTTGGTATATACTTATACTAAAA','9544+9534+9555+61853+9601+9593+9606':'TAAAAAATATAAGTATGTCCCATACAATATTTAGGATATACTTATACTAAAA','9483+9523':'TTAAAAATATAAATATGTCCTATGCAATATTTAAGATATACTTATACTAAAA','9544+9534+9555+61853+9601+9593+9606+9483+9523':'TAAAAAATATAAGTATGTCCTATATAATATTTAGGATATACTTATACTAAAA','30608+9447':'TTAAAAATATAAGTATGTCCCATGCAATATTTGGGACATACTTATACTAAAA','30611+30608+9447':'TTAAAAACATAAGTATGTCCCATGCAATATTTGGGACATATTTATACTAAAA','9544+9534+9555+61853+9601+9593+9606+9483+9523+30611+30608+9447':'TTAAAAATATAAGTATGTCCCATATAATATTTGGGATATACTTATACTAAAA','10090+10116':'TAAAAAATATAAGTATGTCCCATGCAACATTTGGGATATACTTATACTAAAA','43179+10090+10116':'CTAAAAATATAAGTATGTCCTATACAATATTTGGGACATACTTATGCTAAAA','9986+9978':'TTAAAAATATAAGTATGTCCCATGCAATATTTGGGACATACTTATACTAAAA','43179+10090+10116+9986+9978':'TTAAAAATATAAGTATGTCCCATATAATATTTGGGATATACTTATACTAAAA','9544+9534+9555+61853+9601+9593+9606+9483+9523+30611+30608+9447+43179+10090+10116+9986+9978':'TTAAAAATATAAGTGTGTCCCATGTAATATTTGGGATATACTTATACTAAAA','37347+9544+9534+9555+61853+9601+9593+9606+9483+9523+30611+30608+9447+43179+10090+10116+9986+9978':'TTAAAAATATAAGTGTGTCCCATGTAATATTTGGGATATACTTATACTAAAA','9371+9785':'TTAAAAATATAAGTATGTCCCATGCAATATTTGGGACATACTTATACTAAAA','9615+9685':'TTAAAAATATAAGTATGTCCCATGCAATATTTGGGATATACTTATACTAAAA','9417+40233':'TTAAAAATATAATTATGTCCCATGAAGCATTTGAGATATATTTATACTAAAA','42254+9365':'TTAAAAATATAAGTATGTCCCATGCAATATTTGAGATATACTTATACTAAAA','9417+40233+42254+9365':'TTAAAAATATAAGTATGTCCCATGCAATATTTGGGATATACTTATACTAAAA','9913+9417+40233+42254+9365':'TTAAAAATATAAGTATGTCCCATGCAATATTTGGGATATACTTATACTAAAA','9615+9685+9913+9417+40233+42254+9365':'TTAAAAATATAAGTATGTCCCATGCAATATTTGGGATATACTTATACTAAAA','9371+9785+9615+9685+9913+9417+40233+42254+9365':'TTAAAAATATAAGTATGTCCCATGCAATATTTGGGATATACTTATACTAAAA','37347+9544+9534+9555+61853+9601+9593+9606+9483+9523+30611+30608+9447+43179+10090+10116+9986+9978+9371+9785+9615+9685+9913+9417+40233+42254+9365':'TTAAAAATATAAGTATGTCCCATGCAATATTTGGGATATACTTATACTAAAA','9258+37347+9544+9534+9555+61853+9601+9593+9606+9483+9523+30611+30608+9447+43179+10090+10116+9986+9978+9371+9785+9615+9685+9913+9417+40233+42254+9365':'TTAAAAAGATAAGTATGTCCCATACCATGTTTGGGATATACATATACTAAAA','9365':'TTTTTAGTATAAGTATGTCTCATGTAGTATTTGAGATATACTTGCACTAAAA','42254':'ATACTTGTATAAGTATGTCCCATGCAATATCTGGGACATACTTATACTAACA','40233':'TTTTGAGTATAATTATGTCCCACGAAGCATTTGAGAGATATTTATTCTAAAA','9417':'TTTTAAGTATAATGATGTCCCACGAAGCGTTTGAGATATATTTATACTAAAG'}
+    
+    #for key in rna_list.iterkeys():
+    #	print "key: ",key," value: ","\n"
+    #print rna_list.keys(0)
 
     benchmarks = do_benchmarks_MP(rna_list, concensus,nb_processes)
     #benchmarks = dummy_benchmarks(rna_list, metrics_list)
@@ -229,7 +252,7 @@ if __name__ == '__main__':
                         metric.replace('_', r'\_'))
         #Now we want a list of the names of the figures of the metric
         metric_figs_names = [x for x in os.listdir('.') if 
-                             x.endswith('%s.png' % metric)]
+                            x.endswith('%s.png' % metric)]
         list_tex.append(LaTeX.figure_env(metric_figs_names))
     print "Graphs done after: ", time.time() - start_time, 'seconds'
     list_tex.append('\\end{document}')
