@@ -40,10 +40,17 @@ def fold_probability(S, G=None):
 def entropy(Dic):
     """Returns the entropy value of a set of probabilities stored in a dictionary
     """
-    ent=0
+    ent=0.0
+    prob=0.0
+    #print 'ACA........................'
+    #print Dic
     for i,j in Dic.iteritems():
-        if j > 0: ent = ent + (j * math.log(j,2))
+        if j > 0.0: 
+            ent += j * math.log(j,2)
+            prob += j 
+    #print 'prob es....', prob
     ent=ent*-1
+    #print 'ent es....', ent
     return ent
 
 if __name__ == '__main__':
